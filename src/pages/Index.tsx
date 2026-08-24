@@ -33,6 +33,8 @@ const Index = () => {
       const theme = settings.theme || {};
       document.documentElement.classList.toggle("dark", !!theme.darkMode);
       document.documentElement.dataset.theme = theme.primary || "rose";
+      document.documentElement.dataset.headingFont = theme.headingFont || "Playfair Display";
+      document.documentElement.dataset.bodyFont = theme.bodyFont || "Josefin Sans";
       if (settings.wedding?.groomName || settings.wedding?.brideName) document.title = `${settings.wedding?.groomName || "Hareesh"} & ${settings.wedding?.brideName || "Prasanna"} | Wedding`;
     }).catch(() => {});
   }, []);
@@ -54,12 +56,14 @@ const Index = () => {
             transition={{ duration: 0.8 }}
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-wedding-cream"
           >
-            <div className="flex flex-col items-center gap-5">
-              <p className="font-display text-3xl text-black text-center">{wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}</p>
-              <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.45, 1, 0.45] }} transition={{ repeat: Infinity, duration: 1.15, ease: "easeInOut" }} aria-label="Loading">
-                <Heart className="w-16 h-16 text-primary fill-primary/60" />
-              </motion.div>
-              <p className="font-display text-2xl text-black text-center">{wedding.loadingText2 || "Made with love"}</p>
+            <div className={`loading-screen-content flex items-center gap-5 px-5 text-black ${wedding.loadingLayout === "horizontal" ? "flex-row" : "flex-col"}`}>
+              <p className="font-display text-center leading-tight" style={{fontSize:`${Number(wedding.loadingTextSize||30)}px`}}>{wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}</p>
+              {wedding.loadingHeartEnabled !== false && (
+                <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.45, 1, 0.45] }} transition={{ repeat: Infinity, duration: 1.15, ease: "easeInOut" }} aria-label="Loading">
+                  <Heart className="h-16 w-16 shrink-0 text-primary fill-primary/60" />
+                </motion.div>
+              )}
+              <p className="font-display text-center leading-tight" style={{fontSize:`${Number(wedding.loadingText2Size||24)}px`}}>{wedding.loadingText2 || "Made with love"}</p>
             </div>
           </motion.div>
         )}
@@ -91,10 +95,10 @@ const Index = () => {
               case "story": return <div key={section.key} id="story"><StorySection /></div>;
               case "gallery": return <div key={section.key} id="gallery"><GallerySection /></div>;
               case "events": return <div key={section.key} id="events"><EventsSection /></div>;
-              case "rsvp": return <RsvpSection key={section.key} />;
-              case "guestbook": return <GuestbookSection key={section.key} />;
+              case "rsvp": return <div key={section.key} id="rsvp"><RsvpSection /></div>;
+              case "guestbook": return <div key={section.key} id="guestbook"><GuestbookSection /></div>;
               case "blog": return <div key={section.key} id="blog"><BlogSection /></div>;
-              case "footer": return <FooterSection key={section.key} />;
+              case "footer": return <div key={section.key} id="footer"><FooterSection /></div>;
               default: return null;
             }
           })}

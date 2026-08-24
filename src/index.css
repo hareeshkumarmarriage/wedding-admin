@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Josefin+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&family=Josefin+Sans:wght@300;400;500&family=Lato:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;500;600&family=Montserrat:wght@400;500;600&family=Open+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@400;500;600&family=Raleway:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -104,6 +104,25 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+html[data-heading-font="Playfair Display"] { --font-display: 'Playfair Display', serif; }
+html[data-heading-font="Cormorant Garamond"] { --font-display: 'Cormorant Garamond', serif; }
+html[data-heading-font="DM Serif Display"] { --font-display: 'DM Serif Display', serif; }
+html[data-heading-font="Libre Baskerville"] { --font-display: 'Libre Baskerville', serif; }
+html[data-heading-font="Cinzel"] { --font-display: 'Cinzel', serif; }
+html[data-heading-font="Lora"] { --font-display: 'Lora', serif; }
+html[data-heading-font="Montserrat"] { --font-display: 'Montserrat', sans-serif; }
+
+html[data-body-font="Josefin Sans"] { --font-body: 'Josefin Sans', sans-serif; }
+html[data-body-font="Montserrat"] { --font-body: 'Montserrat', sans-serif; }
+html[data-body-font="Poppins"] { --font-body: 'Poppins', sans-serif; }
+html[data-body-font="Lato"] { --font-body: 'Lato', sans-serif; }
+html[data-body-font="Raleway"] { --font-body: 'Raleway', sans-serif; }
+html[data-body-font="Open Sans"] { --font-body: 'Open Sans', sans-serif; }
+html[data-body-font="Inter"] { --font-body: 'Inter', sans-serif; }
+
+.intro-video-mobile-portrait { width: 100vh !important; height: 100vw !important; max-width: none !important; max-height: none !important; left: 50% !important; top: 50% !important; right: auto !important; bottom: auto !important; transform: translate(-50%, -50%) rotate(90deg) !important; object-fit: cover !important; }
+@media (min-width: 641px) { .intro-video-mobile-portrait { width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; transform: none !important; } }
+
 .dark {
   --background: 340 10% 12%;
   --foreground: 30 25% 96%;
