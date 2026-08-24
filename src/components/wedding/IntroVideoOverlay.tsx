@@ -60,7 +60,12 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
   }, [source, autoplayEnabled, muted]);
 
   useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(document.fullscreenElement === overlayRef.current);
+    const handleFullscreenChange = () => {
+      const active = document.fullscreenElement === overlayRef.current;
+      setIsFullscreen(active);
+      if (active) void lockPortraitIfPossible();
+      else unlockOrientationIfPossible();
+    };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
@@ -75,17 +80,39 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
     if (video.paused) void video.play().catch(() => undefined);
   };
 
+  const lockPortraitIfPossible = async () => {
+    try {
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches) {
+        const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> };
+        if (orientation?.lock) await orientation.lock("portrait");
+      }
+    } catch {
+      // Orientation locking is optional and is not supported by every mobile browser.
+    }
+  };
+
+  const unlockOrientationIfPossible = () => {
+    try { screen.orientation?.unlock?.(); } catch {}
+  };
+
   const toggleFullscreen = async () => {
     const overlay = overlayRef.current;
     if (!overlay) return;
     try {
-      if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        unlockOrientationIfPossible();
+        return;
+      }
       await overlay.requestFullscreen();
+      // Never request landscape. On mobile, keep the fullscreen intro in portrait.
+      await lockPortraitIfPossible();
     } catch {}
   };
 
   const finish = async () => {
     if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch {} }
+    unlockOrientationIfPossible();
     onFinished();
   };
 

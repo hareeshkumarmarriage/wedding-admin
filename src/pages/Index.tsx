@@ -41,8 +41,15 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    if (settingsReady) setShowIntro(true);
-  }, [settingsReady]);
+    if (!settingsReady || wedding.introEnabled === false) return;
+
+    // The intro is a first-visit experience. Once it has finished, do not
+    // replay it when the visitor returns to the home page during later
+    // navigation or subsequent visits.
+    const introPlayedKey = "wedding-intro-played-v1";
+    if (window.localStorage.getItem(introPlayedKey) === "1") return;
+    setShowIntro(true);
+  }, [settingsReady, wedding.introEnabled]);
 
   if (siteControl.maintenance?.enabled || siteControl.mode === "disabled") return <main className="grid min-h-screen place-items-center bg-wedding-cream p-6 text-center"><div className="max-w-xl rounded-3xl border border-primary/10 bg-white/80 p-10 shadow-sm"><Heart className="mx-auto text-primary" fill="currentColor" size={34}/><h1 className="mt-5 font-display text-4xl">{siteControl.maintenance.title || "We'll be back soon"}</h1><p className="mt-4 text-muted-foreground">{siteControl.maintenance.description || "We're preparing something special for you. Please check back shortly."}</p></div></main>;
 
@@ -84,7 +91,7 @@ const Index = () => {
 
       <AnimatePresence>
         {showIntro && wedding.introEnabled !== false && (
-          <IntroVideoOverlay onFinished={() => setShowIntro(false)} />
+          <IntroVideoOverlay onFinished={() => { window.localStorage.setItem("wedding-intro-played-v1", "1"); setShowIntro(false); }} />
         )}
       </AnimatePresence>
     </>

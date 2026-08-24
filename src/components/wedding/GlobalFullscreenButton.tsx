@@ -11,14 +11,32 @@ export default function GlobalFullscreenButton() {
     return () => document.removeEventListener("fullscreenchange", sync);
   }, []);
 
+  const lockPortraitIfPossible = async () => {
+    try {
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches) {
+        const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> };
+        if (orientation?.lock) await orientation.lock("portrait");
+      }
+    } catch {
+      // Some mobile browsers do not allow orientation locking. Fullscreen still works.
+    }
+  };
+
+  const unlockOrientationIfPossible = () => {
+    try { screen.orientation?.unlock?.(); } catch {}
+  };
+
   const toggleFullscreen = async () => {
     try {
       if (document.fullscreenElement) {
         await document.exitFullscreen();
+        unlockOrientationIfPossible();
         return;
       }
 
       await document.documentElement.requestFullscreen();
+      // Keep the wedding site fullscreen in portrait on mobile; never request landscape.
+      await lockPortraitIfPossible();
     } catch {
       // Fullscreen can be unavailable in some embedded browsers.
     }
