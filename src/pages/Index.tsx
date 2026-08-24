@@ -46,7 +46,7 @@ const Index = () => {
     // The intro is a first-visit experience. Once it has finished, do not
     // replay it when the visitor returns to the home page during later
     // navigation or subsequent visits.
-    const introPlayedKey = "wedding-intro-played-v1";
+    const introPlayedKey = "wedding-intro-played-v2";
     if (window.localStorage.getItem(introPlayedKey) === "1") return;
     setShowIntro(true);
   }, [settingsReady, wedding.introEnabled]);

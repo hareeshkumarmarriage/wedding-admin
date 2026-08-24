@@ -105,7 +105,7 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
         return;
       }
       await overlay.requestFullscreen();
-      // Never request landscape. On mobile, keep the fullscreen intro in portrait.
+      // Portrait locking applies only while the intro overlay itself is fullscreen.
       await lockPortraitIfPossible();
     } catch {}
   };
