@@ -50,14 +50,14 @@ export default async function handler(req, res) {
       folderId = String(settingsRows[0]?.value?.galleryDriveFolderId || "").trim();
       if (!folderId) return res.status(404).json({ ok: false, error: "Homepage gallery folder is not configured" });
     } else {
-      const eventResponse = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/events?select=drive_folder_id,updated_at&slug=eq.${encodeURIComponent(event)}&is_active=eq.true&limit=1`, {
+      const eventResponse = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/events?select=drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,updated_at&slug=eq.${encodeURIComponent(event)}&is_active=eq.true&limit=1`, {
         headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
       });
       if (!eventResponse.ok) return res.status(502).json({ ok: false, error: "Unable to load event media configuration" });
       const rows = await eventResponse.json();
       const codeVersion = rows[0]?.updated_at || "";
       if (!hasUnlock(req, event, codeVersion)) return res.status(401).json({ ok: false, error: "Event is locked" });
-      folderId = rows[0]?.drive_folder_id;
+      folderId = type === "video/" ? (rows[0]?.videos_drive_folder_id || rows[0]?.drive_folder_id) : (rows[0]?.photos_drive_folder_id || rows[0]?.drive_folder_id);
       if (!folderId) return res.status(404).json({ ok: false, error: "Event media folder not configured" });
     }
     const params = new URLSearchParams({

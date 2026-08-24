@@ -12,7 +12,10 @@ export interface EventRecord {
   date: string | null;
   description: string;
   cover_image: string | null;
+  cover_image_drive_id?: string | null;
   drive_folder_id: string;
+  photos_drive_folder_id?: string | null;
+  videos_drive_folder_id?: string | null;
   sort_order: number;
   is_active: boolean;
   photos_enabled: boolean;
@@ -55,7 +58,10 @@ const FALLBACK: EventRecord[] = [
   date: null,
   description: `${title} memories of Hareesh & Prasanna.`,
   cover_image: null,
+  cover_image_drive_id: null,
   drive_folder_id: FALLBACK_FOLDER,
+  photos_drive_folder_id: FALLBACK_FOLDER,
+  videos_drive_folder_id: FALLBACK_FOLDER,
   sort_order: index,
   is_active: true,
   photos_enabled: true,
@@ -397,7 +403,7 @@ export async function getAdminEvents(
     {
       token,
       query:
-        "select=id,slug,title,date,description,cover_image,drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,created_at,updated_at&order=sort_order.asc",
+        "select=id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,created_at,updated_at&order=sort_order.asc",
     }
   );
 }

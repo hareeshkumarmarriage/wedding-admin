@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getDriveCoverImageUrl } from "@/lib/googleDrive";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +27,7 @@ export default function StorySection() {
       <div className="relative"><div className="absolute bottom-0 left-1/2 top-0 hidden w-px bg-primary/20 md:block" />
         {cards.map((story, index) => {
           const fallback = fallbackStories.find((x) => x[0] === story.slug);
-          const image = story.cover_image || (fallback?.[3] as string) || story2;
+          const image = getDriveCoverImageUrl(story.cover_image_drive_id) || story.cover_image || (fallback?.[3] as string) || story2;
           const date = story.date ? new Date(`${story.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : (fallback?.[2] as string || "");
           const isReverse = index % 2 === 1;
           return <motion.div key={story.slug} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .6, delay: index * .06 }} className={`mb-16 flex flex-col items-center gap-8 md:flex-row ${isReverse ? "md:flex-row-reverse" : ""}`}>

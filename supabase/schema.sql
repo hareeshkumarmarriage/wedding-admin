@@ -10,7 +10,10 @@ create table if not exists public.events (
   date date,
   description text not null default '',
   cover_image text,
+  cover_image_drive_id text,
   drive_folder_id text not null,
+  photos_drive_folder_id text,
+  videos_drive_folder_id text,
   secret_code_hash text not null,
   secret_code_encrypted text,
   sort_order integer not null default 0,
@@ -112,7 +115,7 @@ alter table public.admin_audit_logs enable row level security;
 -- Keep secret_code_hash out of browser-visible data. The browser reads this view; only admins can read the base table.
 drop view if exists public.events_public;
 create view public.events_public as
-select id,slug,title,date,description,cover_image,drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url
+select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url
 from public.events where is_active = true;
 grant select on public.events_public to anon, authenticated;
 
@@ -402,3 +405,28 @@ alter table public.admin_audit_logs add constraint admin_audit_logs_action_check
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('wedding-guest-uploads','wedding-guest-uploads',false,10485760,ARRAY['image/jpeg','image/png','image/webp'])
 on conflict (id) do nothing;
+
+-- V3 EVENT MEDIA CONFIGURATION
+-- Separate Google Drive folders for photos and videos, plus a Drive image ID
+-- for each event cover. Existing drive_folder_id is retained for backward compatibility.
+alter table public.events add column if not exists photos_drive_folder_id text;
+alter table public.events add column if not exists videos_drive_folder_id text;
+alter table public.events add column if not exists cover_image_drive_id text;
+
+update public.events
+set photos_drive_folder_id = coalesce(nullif(photos_drive_folder_id, ''), drive_folder_id),
+    videos_drive_folder_id = coalesce(nullif(videos_drive_folder_id, ''), drive_folder_id)
+where photos_drive_folder_id is null
+   or photos_drive_folder_id = ''
+   or videos_drive_folder_id is null
+   or videos_drive_folder_id = '';
+
+-- Keep the public view in sync for the new event media fields.
+drop view if exists public.events_public;
+create view public.events_public as
+select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,
+       photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,
+       photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,
+       venue_name,venue_address,maps_url
+from public.events where is_active = true;
+grant select on public.events_public to anon, authenticated;

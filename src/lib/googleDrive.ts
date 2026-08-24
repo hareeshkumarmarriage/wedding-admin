@@ -230,6 +230,13 @@ export function getDriveImageUrl(
   return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?${params.toString()}`;
 }
 
+export function getDriveCoverImageUrl(fileId?: string | null, size = 1600): string {
+  const id = String(fileId || "").trim();
+  if (!id) return "";
+  const safeSize = Math.max(400, Math.min(size, 2000));
+  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${safeSize}`;
+}
+
 export function getDriveViewUrl(file: DrivePhoto): string {
   if (file.webViewLink) return file.webViewLink;
   return `https://drive.google.com/file/d/${encodeURIComponent(file.id)}/view`;
