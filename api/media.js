@@ -15,15 +15,38 @@ export default async function handler(req, res) {
   if (!driveKey) return res.status(503).json({ ok: false, error: "Google Drive media service is not configured" });
 
   try {
-    const url = new URL(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`);
-    url.searchParams.set("alt", "media");
-    url.searchParams.set("key", driveKey);
+    // Covers are Drive images. Resolve the Drive thumbnail first, just like the
+    // gallery does. Drive's files.get alt=media endpoint is not reliable for
+    // browser-facing image previews with an API key, while thumbnailLink is.
+    const metadataUrl = new URL(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`);
+    metadataUrl.searchParams.set("key", driveKey);
+    metadataUrl.searchParams.set("fields", "id,name,mimeType,thumbnailLink,resourceKey");
+    const metadataResponse = await fetch(metadataUrl);
+    const metadata = await metadataResponse.json().catch(() => ({}));
+    if (!metadataResponse.ok) {
+      const message = metadata?.error?.message || "Google Drive file is not accessible.";
+      return res.status(metadataResponse.status === 404 ? 404 : metadataResponse.status === 403 ? 403 : 502).json({ ok: false, error: message });
+    }
 
-    const headers = {};
-    const range = req.headers.range;
-    if (typeof range === "string" && range) headers.Range = range;
-
-    const response = await fetch(url, { method: req.method, headers });
+    const isImage = String(metadata.mimeType || "").startsWith("image/");
+    let response;
+    if (isImage && metadata.thumbnailLink) {
+      const thumbnail = new URL(metadata.thumbnailLink);
+      const requestedSize = Number(req.query?.size || 1600);
+      const safeSize = Number.isFinite(requestedSize) ? Math.max(400, Math.min(requestedSize, 2000)) : 1600;
+      if (thumbnail.searchParams.has("sz")) thumbnail.searchParams.set("sz", `w${safeSize}`);
+      else if (/=s\d+/.test(thumbnail.toString())) thumbnail.href = thumbnail.toString().replace(/=s\d+/, `=s${safeSize}`);
+      response = await fetch(thumbnail, { method: req.method });
+    } else {
+      const url = new URL(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`);
+      url.searchParams.set("alt", "media");
+      url.searchParams.set("key", driveKey);
+      if (metadata.resourceKey) url.searchParams.set("resourceKey", metadata.resourceKey);
+      const headers = {};
+      const range = req.headers.range;
+      if (typeof range === "string" && range) headers.Range = range;
+      response = await fetch(url, { method: req.method, headers });
+    }
 
     if (!response.ok) {
       const message = response.status === 404 || response.status === 403
