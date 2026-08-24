@@ -81,14 +81,10 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
     try {
       if (document.fullscreenElement) { await document.exitFullscreen(); return; }
       await overlay.requestFullscreen();
-      const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: "landscape") => Promise<void>; unlock?: () => void };
-      if (typeof orientation.lock === "function") { try { await orientation.lock("landscape"); } catch {} }
     } catch {}
   };
 
   const finish = async () => {
-    const orientation = screen.orientation as ScreenOrientation & { unlock?: () => void };
-    try { orientation.unlock?.(); } catch {}
     if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch {} }
     onFinished();
   };

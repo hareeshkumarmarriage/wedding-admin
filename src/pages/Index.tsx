@@ -16,8 +16,8 @@ import RsvpSection from "@/components/wedding/RsvpSection";
 import ShareWedding from "@/components/wedding/ShareWedding";
 
 const Index = () => {
-  const [endLoad, setEndLoad] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
+  const [settingsReady, setSettingsReady] = useState(false);
   const [sections, setSections] = useState<HomepageSectionRecord[]>([]);
   const [siteControl, setSiteControl] = useState<any>({ mode: "all", maintenance: { enabled: false }, pages: {} });
   const [wedding, setWedding] = useState<any>({});
@@ -36,47 +36,24 @@ const Index = () => {
       document.documentElement.dataset.headingFont = theme.headingFont || "Playfair Display";
       document.documentElement.dataset.bodyFont = theme.bodyFont || "Josefin Sans";
       if (settings.wedding?.groomName || settings.wedding?.brideName) document.title = `${settings.wedding?.groomName || "Hareesh"} & ${settings.wedding?.brideName || "Prasanna"} | Wedding`;
-    }).catch(() => {});
+      setSettingsReady(true);
+    }).catch(() => { setSettingsReady(true); });
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setEndLoad(true); setShowIntro(true); }, Math.max(500, Number(wedding.loadingDuration || 1200)));
-    return () => window.clearTimeout(timer);
-  }, [wedding.loadingDuration]);
+    if (settingsReady) setShowIntro(true);
+  }, [settingsReady]);
 
   if (siteControl.maintenance?.enabled || siteControl.mode === "disabled") return <main className="grid min-h-screen place-items-center bg-wedding-cream p-6 text-center"><div className="max-w-xl rounded-3xl border border-primary/10 bg-white/80 p-10 shadow-sm"><Heart className="mx-auto text-primary" fill="currentColor" size={34}/><h1 className="mt-5 font-display text-4xl">{siteControl.maintenance.title || "We'll be back soon"}</h1><p className="mt-4 text-muted-foreground">{siteControl.maintenance.description || "We're preparing something special for you. Please check back shortly."}</p></div></main>;
 
   return (
     <>
-      <AnimatePresence>
-        {!endLoad && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-wedding-cream"
-          >
-            <div className={`loading-screen-content flex items-center gap-5 px-5 text-black ${wedding.loadingLayout === "horizontal" ? "flex-row" : "flex-col"}`}>
-              <p className="font-display text-center leading-tight" style={{fontSize:`${Number(wedding.loadingTextSize||30)}px`}}>{wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}</p>
-              {wedding.loadingHeartEnabled !== false && (
-                <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.45, 1, 0.45] }} transition={{ repeat: Infinity, duration: 1.15, ease: "easeInOut" }} aria-label="Loading">
-                  <Heart className="h-16 w-16 shrink-0 text-primary fill-primary/60" />
-                </motion.div>
-              )}
-              <p className="font-display text-center leading-tight" style={{fontSize:`${Number(wedding.loadingText2Size||24)}px`}}>{wedding.loadingText2 || "Made with love"}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content - only shows once loading is done */}
-      {endLoad && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="overflow-x-hidden"
-        >
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+        className="overflow-x-hidden"
+      >
           <Navbar />
           {(sections.length ? sections : [
             { key: "hero", enabled: true, sort_order: 1, label: "Hero" },
@@ -103,11 +80,10 @@ const Index = () => {
             }
           })}
           <ShareWedding />
-        </motion.div>
-      )}
+      </motion.div>
 
       <AnimatePresence>
-        {endLoad && showIntro && wedding.introEnabled !== false && (
+        {showIntro && wedding.introEnabled !== false && (
           <IntroVideoOverlay onFinished={() => setShowIntro(false)} />
         )}
       </AnimatePresence>

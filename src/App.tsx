@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import GlobalFullscreenButton from "./components/wedding/GlobalFullscreenButton";
+import PageLoadingOverlay from "./components/wedding/PageLoadingOverlay";
 import PageAvailabilityGate from "./components/PageAvailabilityGate";
 
 const DriveGallery = lazy(() => import("./pages/DriveGallery.tsx"));
@@ -36,6 +37,7 @@ const App = () => (
       <Sonner />
       <GlobalFullscreenButton />
       <BrowserRouter>
+        <PageLoadingOverlay />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />

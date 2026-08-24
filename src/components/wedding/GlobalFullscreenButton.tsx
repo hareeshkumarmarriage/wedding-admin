@@ -19,18 +19,6 @@ export default function GlobalFullscreenButton() {
       }
 
       await document.documentElement.requestFullscreen();
-
-      // Best effort on mobile browsers that support screen orientation locking.
-      const orientation = screen.orientation as ScreenOrientation & {
-        lock?: (orientation: "landscape") => Promise<void>;
-      };
-      if (typeof orientation.lock === "function" && window.matchMedia("(max-width: 767px)").matches) {
-        try {
-          await orientation.lock("landscape");
-        } catch {
-          // Orientation locking is optional and browser-dependent.
-        }
-      }
     } catch {
       // Fullscreen can be unavailable in some embedded browsers.
     }
