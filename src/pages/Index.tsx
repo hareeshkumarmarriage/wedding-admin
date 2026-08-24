@@ -43,11 +43,9 @@ const Index = () => {
   useEffect(() => {
     if (!settingsReady || wedding.introEnabled === false) return;
 
-    // The intro is a first-visit experience. Once it has finished, do not
-    // replay it when the visitor returns to the home page during later
-    // navigation or subsequent visits.
-    const introPlayedKey = "wedding-intro-played-v2";
-    if (window.localStorage.getItem(introPlayedKey) === "1") return;
+    // The H ♥ P opening is shown every time the home page is entered.
+    // IntroVideoOverlay decides separately whether the actual video should
+    // play once or on every visit.
     setShowIntro(true);
   }, [settingsReady, wedding.introEnabled]);
 
@@ -91,7 +89,7 @@ const Index = () => {
 
       <AnimatePresence>
         {showIntro && wedding.introEnabled !== false && (
-          <IntroVideoOverlay onFinished={() => { window.localStorage.setItem("wedding-intro-played-v1", "1"); setShowIntro(false); }} />
+          <IntroVideoOverlay onFinished={() => setShowIntro(false)} />
         )}
       </AnimatePresence>
     </>

@@ -45,22 +45,25 @@ const parseWeddingDateTime = (dateValue: string, timeValue: string, timeZone = "
 
 const useWeddingCountdown = (target: Date) => {
   const targetMs = target.getTime();
-  const calculate = () => Math.max(0, targetMs - Date.now());
-  const [remaining, setRemaining] = useState(calculate);
+  const calculate = () => targetMs - Date.now();
+  const [difference, setDifference] = useState(calculate);
 
   useEffect(() => {
-    setRemaining(calculate());
-    const timer = window.setInterval(() => setRemaining(calculate()), 1000);
+    setDifference(calculate());
+    const timer = window.setInterval(() => setDifference(calculate()), 1000);
     return () => window.clearInterval(timer);
   }, [targetMs]);
 
-  const totalSeconds = Math.floor(remaining / 1000);
+  // Before the wedding, count down. After the wedding, count upward from
+  // the wedding date/time so visitors can see how much time has passed.
+  const isPast = difference < 0;
+  const totalSeconds = Math.floor(Math.abs(difference) / 1000);
   return {
     days: Math.floor(totalSeconds / 86400),
     hours: Math.floor((totalSeconds % 86400) / 3600),
     mins: Math.floor((totalSeconds % 3600) / 60),
     secs: totalSeconds % 60,
-    isPast: remaining <= 0,
+    isPast,
   };
 };
 
@@ -72,7 +75,7 @@ const HeroSection = () => {
   const heroImage = driveFileIdUrl(content.heroImageDriveId) || heroFallback;
   const bride = content.brideName || "Prasanna";
   const dateText = content.date ? new Date(`${content.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }).replaceAll("/", " . ") : "04 . 04 . 2026";
-  const { days, hours, mins, secs } = useWeddingCountdown(weddingDateTime);
+  const { days, hours, mins, secs, isPast } = useWeddingCountdown(weddingDateTime);
 
   const countdownItems = [
     { value: days, label: "Days" },
@@ -160,7 +163,8 @@ const HeroSection = () => {
           {dateText} - {content.time || "08 . 59 . 00"}
         </motion.p>
 
-        {/* Elapsed Time */}
+        {/* Countdown / elapsed time */}
+        <p className="mb-4 font-body text-xs uppercase tracking-[0.25em] text-muted-foreground">{isPast ? "Time since our wedding" : "Countdown to our wedding"}</p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
