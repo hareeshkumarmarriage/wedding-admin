@@ -9,6 +9,7 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import GlobalFullscreenButton from "./components/wedding/GlobalFullscreenButton";
 import PageAvailabilityGate from "./components/PageAvailabilityGate";
+import PageLoadingOverlay from "./components/wedding/PageLoadingOverlay";
 
 const DriveGallery = lazy(() => import("./pages/DriveGallery.tsx"));
 const DriveVideos = lazy(() => import("./pages/DriveVideos.tsx"));
@@ -36,6 +37,7 @@ const App = () => (
       <Sonner />
       <GlobalFullscreenButton />
       <BrowserRouter>
+        <PageLoadingOverlay />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />

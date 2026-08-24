@@ -1,17 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { getSiteSettings } from "@/lib/supabaseData";
 
 const DEFAULT_DURATION = 1200;
+const LOADER_PLAYED_KEY = "wedding-loading-screen-played-v1";
+const LOADER_READY_KEY = "wedding-loading-screen-ready-path-v1";
+
+const markReady = (pathname: string) => {
+  try {
+    sessionStorage.setItem(LOADER_READY_KEY, pathname);
+  } catch {}
+  window.dispatchEvent(new CustomEvent("wedding-loading-finished", { detail: { pathname } }));
+};
 
 export default function PageLoadingOverlay() {
   const location = useLocation();
   const [wedding, setWedding] = useState<any>({});
   const [settingsReady, setSettingsReady] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const firstRoute = useRef(true);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -33,20 +41,38 @@ export default function PageLoadingOverlay() {
     if (!settingsReady) return;
 
     const isHome = location.pathname === "/";
-    const showForThisRoute = isHome || wedding.loadingAllPages === true;
+    const eligible = isHome || wedding.loadingAllPages === true;
+    const playMode = wedding.loadingPlayMode === "always" ? "always" : "once";
 
-    if (!showForThisRoute) {
+    // Clear the previous completion marker for this navigation cycle. This
+    // prevents an "always" loader from overlapping the intro on return to Home.
+    try { sessionStorage.removeItem(LOADER_READY_KEY); } catch {}
+
+    if (!eligible) {
       setVisible(false);
-      firstRoute.current = false;
+      return;
+    }
+
+    let alreadyPlayed = false;
+    try { alreadyPlayed = localStorage.getItem(LOADER_PLAYED_KEY) === "1"; } catch {}
+
+    // "Once" means once per browser. "Always" means every eligible page visit.
+    if (playMode === "once" && alreadyPlayed) {
+      setVisible(false);
+      markReady(location.pathname);
       return;
     }
 
     setVisible(true);
     const duration = Math.max(500, Math.min(30000, Number(wedding.loadingDuration || DEFAULT_DURATION)));
-    const timer = window.setTimeout(() => setVisible(false), duration);
-    firstRoute.current = false;
+    const timer = window.setTimeout(() => {
+      try { localStorage.setItem(LOADER_PLAYED_KEY, "1"); } catch {}
+      setVisible(false);
+      markReady(location.pathname);
+    }, duration);
+
     return () => window.clearTimeout(timer);
-  }, [location.pathname, location.search, settingsReady, wedding.loadingAllPages, wedding.loadingDuration]);
+  }, [location.pathname, location.search, settingsReady, wedding.loadingAllPages, wedding.loadingDuration, wedding.loadingPlayMode]);
 
   const layout = wedding.loadingLayout === "horizontal" ? "flex-row" : "flex-col";
   const text1Size = Number(wedding.loadingTextSize || 30);
@@ -62,7 +88,7 @@ export default function PageLoadingOverlay() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.55 }}
           className="fixed inset-0 z-[12000] flex items-center justify-center bg-wedding-cream"
-          aria-label="Loading website"
+          aria-label="Wedding opening"
           role="status"
         >
           <div className={`loading-screen-content flex items-center justify-center gap-5 px-5 text-black ${layout}`}>

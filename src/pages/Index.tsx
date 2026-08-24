@@ -43,10 +43,22 @@ const Index = () => {
   useEffect(() => {
     if (!settingsReady || wedding.introEnabled === false) return;
 
-    // The H ♥ P opening is shown every time the home page is entered.
-    // IntroVideoOverlay decides separately whether the actual video should
-    // play once or on every visit.
-    setShowIntro(true);
+    // The previous opening is now the single loading screen (text 1 → blinking
+    // heart → text 2). Wait for that screen to finish before starting the video.
+    // The loading screen itself controls whether it appears once or every visit.
+    let active = true;
+    const readyKey = "wedding-loading-screen-ready-path-v1";
+    const currentPath = window.location.pathname;
+    const show = () => { if (active) setShowIntro(true); };
+    let ready = false;
+    try { ready = sessionStorage.getItem(readyKey) === currentPath; } catch {}
+    if (ready) { show(); return () => { active = false; }; }
+
+    window.addEventListener("wedding-loading-finished", show);
+    return () => {
+      active = false;
+      window.removeEventListener("wedding-loading-finished", show);
+    };
   }, [settingsReady, wedding.introEnabled]);
 
   if (siteControl.maintenance?.enabled || siteControl.mode === "disabled") return <main className="grid min-h-screen place-items-center bg-wedding-cream p-6 text-center"><div className="max-w-xl rounded-3xl border border-primary/10 bg-white/80 p-10 shadow-sm"><Heart className="mx-auto text-primary" fill="currentColor" size={34}/><h1 className="mt-5 font-display text-4xl">{siteControl.maintenance.title || "We'll be back soon"}</h1><p className="mt-4 text-muted-foreground">{siteControl.maintenance.description || "We're preparing something special for you. Please check back shortly."}</p></div></main>;
