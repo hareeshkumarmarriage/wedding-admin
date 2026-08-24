@@ -13,8 +13,8 @@ const BlogSection = () => {
         <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="section-subtitle mb-3">{content.blogEyebrow || "Latest News"}</motion.p>
         <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="section-title">{content.blogHeading || "Our Latest Wedding News"}</motion.h2>
       </div>
-      <div className="grid gap-8 md:grid-cols-2">
-        {posts.map((post:any, index:number) => { const youtubeUrl = youtubeEmbedUrl(post.youtubeUrl || ""); return <motion.article key={`${post.title || "blog"}-${index}`} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="group w-full">
+      <div className="grid gap-8 justify-items-center">
+        {posts.map((post:any, index:number) => { const youtubeUrl = youtubeEmbedUrl(post.youtubeUrl || ""); return <motion.article key={`${post.title || "blog"}-${index}`} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="group w-full max-w-3xl">
           <div className="relative w-full aspect-video overflow-hidden rounded-xl mb-4 shadow-md bg-black">
             {youtubeUrl ? <iframe className="absolute inset-0 w-full h-full" src={youtubeUrl} title={post.title || "Wedding YouTube video"} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /> : <div className="grid h-full place-items-center text-white/70">Add a YouTube URL in Admin → Content.</div>}
           </div>

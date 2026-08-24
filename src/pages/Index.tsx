@@ -14,7 +14,6 @@ import GuestbookSection from "@/components/wedding/GuestbookSection";
 import IntroVideoOverlay from "@/components/wedding/IntroVideoOverlay";
 import RsvpSection from "@/components/wedding/RsvpSection";
 import ShareWedding from "@/components/wedding/ShareWedding";
-import { driveFileIdUrl } from "@/lib/homepageMedia";
 
 const Index = () => {
   const [endLoad, setEndLoad] = useState(false);
@@ -56,10 +55,11 @@ const Index = () => {
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-wedding-cream"
           >
             <div className="flex flex-col items-center gap-5">
-              {wedding.loadingLogoDriveId ? <img src={driveFileIdUrl(wedding.loadingLogoDriveId)} alt="Wedding logo" className="h-24 w-24 rounded-full object-cover" /> : <Heart className="w-20 h-20 text-primary fill-primary/60" />}
-              <motion.div animate={{ scale: [1, 1.08, 1], opacity: [0.65, 1, 0.65] }} transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}>
-                <p className="font-display text-3xl text-black">{wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}</p>
+              <p className="font-display text-3xl text-black text-center">{wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}</p>
+              <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.45, 1, 0.45] }} transition={{ repeat: Infinity, duration: 1.15, ease: "easeInOut" }} aria-label="Loading">
+                <Heart className="w-16 h-16 text-primary fill-primary/60" />
               </motion.div>
+              <p className="font-display text-2xl text-black text-center">{wedding.loadingText2 || "Made with love"}</p>
             </div>
           </motion.div>
         )}

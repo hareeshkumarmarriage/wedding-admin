@@ -4,89 +4,70 @@ import heroFallback from "@/assets/hero-couple.jpg";
 import { driveFileIdUrl } from "@/lib/homepageMedia";
 import { getSiteSettings } from "@/lib/supabaseData";
 
-const DEFAULT_START_DATE = "2026-04-04T08:59:01";
+const DEFAULT_WEDDING_DATE = "2026-04-04T08:59:00";
 
-const useElapsedTime = (start: Date) => {
-  const [timePassed, setTimePassed] = useState({
-    years: 0,
-    days: 0,
-    hours: 0,
-    mins: 0,
-    secs: 0,
-  });
+const parseWeddingDateTime = (dateValue: string, timeValue: string, timeZone = "Asia/Kolkata") => {
+  const date = String(dateValue || "2026-04-04").trim();
+  let time = String(timeValue || "08:59 AM").trim();
+  const m = time.match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?$/i);
+  let hour = 8, minute = 59, second = 0;
+  if (m) {
+    hour = Number(m[1]);
+    minute = Number(m[2] || 0);
+    second = Number(m[3] || 0);
+    const meridiem = (m[4] || "").toUpperCase();
+    if (meridiem === "PM" && hour < 12) hour += 12;
+    if (meridiem === "AM" && hour === 12) hour = 0;
+  } else {
+    time = "08:59:00";
+  }
+  const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dateMatch) return new Date(DEFAULT_WEDDING_DATE);
+  const [_, y, mo, d] = dateMatch;
+  const naiveUtc = Date.UTC(Number(y), Number(mo) - 1, Number(d), hour, minute, second);
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(naiveUtc));
+    const values = Object.fromEntries(parts.filter(p => p.type !== "literal").map(p => [p.type, p.value]));
+    const asUtc = Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day), Number(values.hour), Number(values.minute), Number(values.second));
+    const offset = asUtc - naiveUtc;
+    const target = new Date(naiveUtc - offset);
+    return Number.isNaN(target.getTime()) ? new Date(DEFAULT_WEDDING_DATE) : target;
+  } catch {
+    const local = new Date(`${date}T${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}:${String(second).padStart(2,"0")}`);
+    return Number.isNaN(local.getTime()) ? new Date(DEFAULT_WEDDING_DATE) : local;
+  }
+};
 
+const useWeddingCountdown = (target: Date) => {
+  const calculate = () => Math.max(0, target.getTime() - Date.now());
+  const [remaining, setRemaining] = useState(calculate);
   useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-
-      // Calculate completed years
-      let years = now.getFullYear() - start.getFullYear();
-
-      const anniversary = new Date(start);
-      anniversary.setFullYear(start.getFullYear() + years);
-
-      // If this year's anniversary hasn't happened yet,
-      // subtract one year.
-      if (anniversary > now) {
-        years--;
-
-        anniversary.setFullYear(start.getFullYear() + years);
-      }
-
-      // Calculate remaining time after completed years
-      const diff = Math.max(
-        0,
-        now.getTime() - anniversary.getTime()
-      );
-
-      setTimePassed({
-        years,
-        days: Math.floor(
-          diff / (1000 * 60 * 60 * 24)
-        ),
-        hours: Math.floor(
-          (diff / (1000 * 60 * 60)) % 24
-        ),
-        mins: Math.floor(
-          (diff / (1000 * 60)) % 60
-        ),
-        secs: Math.floor(
-          (diff / 1000) % 60
-        ),
-      });
-    };
-
-    // Run immediately
+    const tick = () => setRemaining(calculate());
     tick();
-
-    // Update every second
-    const id = setInterval(tick, 1000);
-
-    // Cleanup interval
-    return () => clearInterval(id);
-  }, [start]);
-
-  return timePassed;
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [target.getTime()]);
+  const totalSeconds = Math.floor(remaining / 1000);
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    mins: Math.floor((totalSeconds % 3600) / 60),
+    secs: totalSeconds % 60,
+    isPast: remaining <= 0,
+  };
 };
 
 const HeroSection = () => {
   const [content, setContent] = useState<any>({});
   useEffect(() => { getSiteSettings().then((s) => setContent(s.wedding || {})).catch(() => {}); }, []);
   const groom = content.groomName || "Hareesh Kumar";
-  const startDate = useMemo(() => { const raw = `${content.date || "2026-04-04"}T${content.time || "08:59 AM"}`; const parsed = new Date(raw); return Number.isNaN(parsed.getTime()) ? new Date(DEFAULT_START_DATE) : parsed; }, [content.date, content.time]);
+  const weddingDateTime = useMemo(() => parseWeddingDateTime(content.date, content.time, content.timezone || "Asia/Kolkata"), [content.date, content.time, content.timezone]);
   const heroImage = driveFileIdUrl(content.heroImageDriveId) || heroFallback;
   const bride = content.brideName || "Prasanna";
   const dateText = content.date ? new Date(`${content.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }).replaceAll("/", " . ") : "04 . 04 . 2026";
-  const {
-    years,
-    days,
-    hours,
-    mins,
-    secs,
-  } = useElapsedTime(startDate);
+  const { days, hours, mins, secs } = useWeddingCountdown(weddingDateTime);
 
   const countdownItems = [
-    { value: years, label: "Years" },
     { value: days, label: "Days" },
     { value: hours, label: "Hours" },
     { value: mins, label: "Mins" },
@@ -182,7 +163,7 @@ const HeroSection = () => {
           }}
           className="flex justify-center gap-3 md:gap-6 lg:gap-10"
         >
-          {countdownItems.map(({ value, label }) => (
+          {content.countdownEnabled !== false && countdownItems.map(({ value, label }) => (
             <div
               key={label}
               className="text-center"

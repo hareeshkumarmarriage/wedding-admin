@@ -118,3 +118,8 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 }
 html[data-theme="gold"] { --primary: 38 60% 50%; --ring: 38 60% 50%; --accent: 38 45% 70%; }
 html[data-theme="sage"] { --primary: 150 22% 42%; --ring: 150 22% 42%; --accent: 150 18% 68%; }
+html[data-theme="blush"] { --primary: 350 55% 68%; --ring: 350 55% 68%; --accent: 350 45% 82%; }
+html[data-theme="mauve"] { --primary: 300 22% 52%; --ring: 300 22% 52%; --accent: 300 18% 72%; }
+html[data-theme="terracotta"] { --primary: 15 58% 48%; --ring: 15 58% 48%; --accent: 15 45% 70%; }
+html[data-theme="lavender"] { --primary: 265 38% 58%; --ring: 265 38% 58%; --accent: 265 30% 76%; }
+html[data-theme="navy"] { --primary: 220 42% 35%; --ring: 220 42% 35%; --accent: 220 30% 68%; }
