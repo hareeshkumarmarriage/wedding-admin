@@ -102,6 +102,7 @@ const HeroSection = () => {
           src={heroImage}
           alt="Hareesh Kumar and Prasanna together"
           className="w-full h-full object-cover opacity-30"
+          onError={(e) => { e.currentTarget.src = heroFallback; }}
         />
 
         <div className="absolute inset-0 bg-gradient-to-b from-wedding-cream/60 via-transparent to-wedding-cream" />

@@ -1,14 +1,15 @@
-export function driveFileIdUrl(fileId: string, mode: "view" | "download" = "view") {
+export function driveFileIdUrls(fileId: string, mode: "view" | "download" = "view"): string[] {
   const id = String(fileId || "").trim();
-  if (!id) return "";
-  if (mode === "download") {
-    const key = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY || "";
-    if (key) {
-      return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media&key=${encodeURIComponent(key)}`;
-    }
-    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
-  }
-  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
+  if (!id) return [];
+  const key = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY || "";
+  const urls = mode === "download"
+    ? [`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`, `https://drive.usercontent.google.com/download?id=${encodeURIComponent(id)}&export=download&confirm=t`, ...(key ? [`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media&key=${encodeURIComponent(key)}`] : [])]
+    : [`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`, `https://drive.usercontent.google.com/download?id=${encodeURIComponent(id)}&export=view&confirm=t`, ...(key ? [`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media&key=${encodeURIComponent(key)}`] : [])];
+  return [...new Set(urls)];
+}
+
+export function driveFileIdUrl(fileId: string, mode: "view" | "download" = "view") {
+  return driveFileIdUrls(fileId, mode)[0] || "";
 }
 
 export function youtubeEmbedUrl(value: string) {

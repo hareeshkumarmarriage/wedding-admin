@@ -16,16 +16,6 @@ function rateLimit(key) {
   return current.count > MAX_ATTEMPTS;
 }
 
-function sameOrigin(req) {
-  const origin = req.headers.origin;
-  if (!origin) return true;
-  try {
-    return new URL(origin).host === String(req.headers.host || "");
-  } catch {
-    return false;
-  }
-}
-
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest();
 }
@@ -42,7 +32,6 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
-  if (!sameOrigin(req)) return res.status(403).json({ ok: false, error: "Forbidden" });
 
   const forwarded = req.headers["x-forwarded-for"];
   const ip = Array.isArray(forwarded)
