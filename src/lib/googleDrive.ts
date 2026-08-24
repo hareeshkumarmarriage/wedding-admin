@@ -95,11 +95,39 @@ async function fetchDrivePage<T extends DrivePhoto>(
     let detail = "";
     try {
       const body = await response.json();
-      detail = body?.error?.message ? ` ${body.error.message}` : "";
+      detail = body?.error?.message ? ` ${body.error.message}` : (body?.error ? ` ${body.error}` : "");
     } catch {
       // Ignore non-JSON error responses.
     }
-    throw new Error(`Unable to load Google Drive media.${detail}`);
+
+    // If the server-side proxy is unavailable/misconfigured in local development
+    // (or on a static host), fall back to the browser Drive API when a VITE key
+    // was intentionally configured. Never bypass a 401/403 event lock.
+    if (API_KEY && [404, 500, 502, 503, 504].includes(response.status)) {
+      requireDriveConfig(folderId);
+      const params = new URLSearchParams({
+        q: `'${folderId}' in parents and trashed = false and mimeType contains '${mimePrefix}'`,
+        key: API_KEY,
+        pageSize: String(PAGE_SIZE),
+        fields: mimePrefix === "image/"
+          ? "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,imageMediaMetadata(width,height))"
+          : "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,videoMediaMetadata(width,height,durationMillis))",
+        orderBy: "name_natural",
+      });
+      if (pageToken) params.set("pageToken", pageToken);
+      const direct = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, { headers: { Accept: "application/json" } });
+      if (!direct.ok) {
+        let directDetail = "";
+        try {
+          const body = await direct.json();
+          directDetail = body?.error?.message ? ` ${body.error.message}` : "";
+        } catch {}
+        throw new Error(`Unable to load Google Drive media.${directDetail}`);
+      }
+      response = direct;
+    } else {
+      throw new Error(`Unable to load Google Drive media.${detail}`);
+    }
   }
 
   const data = (await response.json()) as {
@@ -233,8 +261,9 @@ export function getDriveImageUrl(
 export function getDriveCoverImageUrl(fileId?: string | null, size = 1600): string {
   const id = String(fileId || "").trim();
   if (!id) return "";
-  const safeSize = Math.max(400, Math.min(size, 2000));
-  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${safeSize}`;
+  // Use the same-origin media proxy first so Drive redirects/CSP do not break
+  // event cover images. It also works when the Drive thumbnail endpoint changes.
+  return `/api/media?id=${encodeURIComponent(id)}&size=${Math.max(400, Math.min(size, 2000))}`;
 }
 
 export function getDriveViewUrl(file: DrivePhoto): string {

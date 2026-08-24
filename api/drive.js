@@ -72,7 +72,14 @@ export default async function handler(req, res) {
     if (pageToken) params.set("pageToken", pageToken);
     const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`);
     const body = await response.text();
-    if (!response.ok) return res.status(502).json({ ok: false, error: "Unable to load Google Drive media" });
+    if (!response.ok) {
+      let message = "Unable to load Google Drive media";
+      try {
+        const parsed = JSON.parse(body);
+        message = parsed?.error?.message || parsed?.error || message;
+      } catch {}
+      return res.status(502).json({ ok: false, error: message });
+    }
     return res.status(200).send(body);
   } catch (error) {
     console.error("Drive API error", error);
