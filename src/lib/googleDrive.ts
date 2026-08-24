@@ -220,6 +220,7 @@ export function getDriveImageUrl(
   if (file.thumbnailLink) {
     return resizeThumbnailUrl(file.thumbnailLink, Math.min(size, 2200));
   }
+  if (file.webContentLink) return file.webContentLink;
   if (!API_KEY || !file.id) return "";
 
   const params = new URLSearchParams({
@@ -236,6 +237,7 @@ export function getDriveViewUrl(file: DrivePhoto): string {
 }
 
 export function getDriveVideoDownloadUrl(file: DriveVideo): string {
+  if (file.webContentLink) return file.webContentLink;
   if (!API_KEY || !file.id) return "";
   const params = new URLSearchParams({ alt: "media", key: API_KEY });
   if (file.resourceKey) params.set("resourceKey", file.resourceKey);
