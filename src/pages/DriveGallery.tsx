@@ -344,7 +344,7 @@ const DriveGallery = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 overflow-hidden rounded-[2rem] bg-white/70 shadow-xl ring-1 ring-primary/10">
             <div className="grid md:grid-cols-[0.8fr_1.2fr]">
               <div className="relative min-h-[230px] overflow-hidden md:min-h-[300px]">
-                <img src={getDriveCoverImageUrl(eventRecord?.cover_image_drive_id) || eventRecord?.cover_image || EVENT_COVERS[event] || story1} alt={`${title} memories`} className="absolute inset-0 h-full w-full object-cover" loading="eager" />
+                <img src={getDriveCoverImageUrl(eventRecord?.cover_image_drive_id, 1600, eventRecord?.updated_at) || eventRecord?.cover_image || EVENT_COVERS[event] || story1} alt={`${title} memories`} className="absolute inset-0 h-full w-full object-cover" loading="eager" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
                 <div className="absolute bottom-5 left-5 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-foreground shadow-sm">Our memories</div>
               </div>

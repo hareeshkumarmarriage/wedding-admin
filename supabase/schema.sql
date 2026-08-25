@@ -115,7 +115,7 @@ alter table public.admin_audit_logs enable row level security;
 -- Keep secret_code_hash out of browser-visible data. The browser reads this view; only admins can read the base table.
 drop view if exists public.events_public;
 create view public.events_public as
-select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url
+select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,updated_at
 from public.events where is_active = true;
 grant select on public.events_public to anon, authenticated;
 

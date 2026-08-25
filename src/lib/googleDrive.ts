@@ -258,12 +258,35 @@ export function getDriveImageUrl(
   return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?${params.toString()}`;
 }
 
-export function getDriveCoverImageUrl(fileId?: string | null, size = 1600): string {
+export function getDriveCoverImageUrl(
+  fileId?: string | null,
+  size = 1600,
+  cacheKey?: string | null,
+): string {
   const id = String(fileId || "").trim();
   if (!id) return "";
   // Use the same-origin media proxy first so Drive redirects/CSP do not break
-  // event cover images. It also works when the Drive thumbnail endpoint changes.
-  return `/api/media?id=${encodeURIComponent(id)}&size=${Math.max(400, Math.min(size, 2000))}`;
+  // event cover images. The optional cache key lets the public event card
+  // immediately pick up a changed cover without waiting for CDN/browser cache.
+  const params = new URLSearchParams({
+    id,
+    size: String(Math.max(400, Math.min(size, 2000))),
+  });
+  if (cacheKey) params.set("v", String(cacheKey));
+  return `/api/media?${params.toString()}`;
+}
+
+export function getDriveFolderUrl(folderId?: string | null): string {
+  const id = String(folderId || "").trim();
+  if (!id) return "";
+  return `https://drive.google.com/drive/folders/${encodeURIComponent(id)}`;
+}
+
+export function getDriveDirectThumbnailUrl(fileId?: string | null, size = 1600): string {
+  const id = String(fileId || "").trim();
+  if (!id) return "";
+  const safeSize = Math.max(400, Math.min(size, 2000));
+  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${safeSize}`;
 }
 
 export function getDriveViewUrl(file: DrivePhoto): string {

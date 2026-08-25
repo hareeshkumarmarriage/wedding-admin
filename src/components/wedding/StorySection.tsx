@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDriveCoverImageUrl } from "@/lib/googleDrive";
+import { getDriveCoverImageUrl, getDriveDirectThumbnailUrl } from "@/lib/googleDrive";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -27,11 +27,29 @@ export default function StorySection() {
       <div className="relative"><div className="absolute bottom-0 left-1/2 top-0 hidden w-px bg-primary/20 md:block" />
         {cards.map((story, index) => {
           const fallback = fallbackStories.find((x) => x[0] === story.slug);
-          const image = getDriveCoverImageUrl(story.cover_image_drive_id) || story.cover_image || (fallback?.[3] as string) || story2;
+          const driveCover = getDriveCoverImageUrl(story.cover_image_drive_id, 1600, story.updated_at);
+          const fallbackImage = story.cover_image || (fallback?.[3] as string) || story2;
+          const image = driveCover || fallbackImage;
           const date = story.date ? new Date(`${story.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : (fallback?.[2] as string || "");
           const isReverse = index % 2 === 1;
           return <motion.div key={story.slug} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .6, delay: index * .06 }} className={`mb-16 flex flex-col items-center gap-8 md:flex-row ${isReverse ? "md:flex-row-reverse" : ""}`}>
-            <div className="md:w-1/2"><button onClick={() => navigate(`/gallery?event=${encodeURIComponent(story.slug)}`)} className="group block w-full text-left"><div className="aspect-[4/3] overflow-hidden rounded-2xl bg-white shadow-xl"><img src={image} alt={story.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div></button></div>
+            <div className="md:w-1/2"><button onClick={() => navigate(`/gallery?event=${encodeURIComponent(story.slug)}`)} className="group block w-full text-left"><div className="aspect-[4/3] overflow-hidden rounded-2xl bg-white shadow-xl"><img
+                  src={image}
+                  alt={story.title}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={(event) => {
+                    const img = event.currentTarget;
+                    const direct = story.cover_image_drive_id ? getDriveDirectThumbnailUrl(story.cover_image_drive_id, 1600) : "";
+                    if (direct && img.dataset.driveFallback !== "1") {
+                      img.dataset.driveFallback = "1";
+                      img.src = direct;
+                    } else if (img.dataset.staticFallback !== "1") {
+                      img.dataset.staticFallback = "1";
+                      img.src = fallbackImage;
+                    }
+                  }}
+                /></div></button></div>
             <div className="hidden h-4 w-4 shrink-0 rounded-full border-4 border-wedding-cream bg-primary md:block" />
             <div className={`text-center md:w-1/2 ${isReverse ? "md:text-right" : "md:text-left"}`}>
               <button onClick={() => navigate(`/gallery?event=${encodeURIComponent(story.slug)}`)} className="group text-left"><h3 className="font-display text-2xl transition-colors group-hover:text-primary">{story.title}</h3><p className="mb-3 mt-1 font-accent text-sm tracking-wider text-primary">{date}</p></button>
