@@ -1,11 +1,11 @@
-const crypto = require("node:crypto");
+import crypto from "node:crypto";
 const attempts = new Map();
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 6;
 function ip(req){return String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0].trim();}
 function limited(key){const now=Date.now();const c=attempts.get(key);if(!c||now-c.startedAt>=WINDOW_MS){attempts.set(key,{startedAt:now,count:1});return false;}c.count+=1;return c.count>MAX_ATTEMPTS;}
 function sameOrigin(req){const o=req.headers.origin;if(!o)return true;try{return new URL(o).host===String(req.headers.host||"");}catch{return false;}}
-module.exports = async function handler(req,res){
+export default async function handler(req,res){
   res.setHeader("Cache-Control","no-store");
   if(req.method!=="POST")return res.status(405).json({ok:false,error:"Method not allowed"});
   if(!sameOrigin(req))return res.status(403).json({ok:false,error:"Forbidden"});

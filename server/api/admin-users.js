@@ -55,6 +55,26 @@ export default async function handler(req,res){
       await supa('/rest/v1/admin_sessions',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({user_id:authUser.id,username:p.username||authUser.email,role:p.role||'admin',ip_address:info.ip,device:info.device,user_agent:info.userAgent,last_seen_at:new Date().toISOString()})});
       return json(res,200,{ok:true,session_id:(await supa(`/rest/v1/admin_sessions?user_id=eq.${encodeURIComponent(authUser.id)}&select=id&order=created_at.desc&limit=1`))[0]?.id || null});
     }
+    if(action==='list_sessions'){
+      return json(res,200,{ok:true,sessions:await supa('/rest/v1/admin_sessions?select=*&revoked_at=is.null&order=last_seen_at.desc&limit=100')});
+    }
+    if(action==='check_session'){
+      const checkId=String(req.query?.id || (req.body||{}).id || '');
+      if(!checkId) return json(res,400,{ok:false,error:'Session ID required.'});
+      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&select=revoked_at,last_seen_at&limit=1`);
+      return json(res,200,{ok:true,revoked:!!rows[0]?.revoked_at});
+    }
+    if(action==='force_logout'){
+      const id=String((req.body||{}).id || req.query?.id || '');
+      if(!id) return json(res,400,{ok:false,error:'Session ID required.'});
+      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(id)}&select=user_id`);
+      const uid=rows[0]?.user_id;
+      if(uid){
+        await supa(`/auth/v1/admin/users/${encodeURIComponent(uid)}`,{method:'PUT',body:JSON.stringify({user_metadata:{force_logout_at:new Date().toISOString()}})});
+      }
+      await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({revoked_at:new Date().toISOString()})});
+      return json(res,200,{ok:true});
+    }
     return json(res,400,{ok:false,error:'Unknown action.'});
   } catch(e){ return json(res,500,{ok:false,error:e.message||'Admin user operation failed.'}); }
 }
