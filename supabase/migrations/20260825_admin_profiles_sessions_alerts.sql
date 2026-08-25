@@ -57,5 +57,5 @@ alter table public.admin_audit_logs add constraint admin_audit_logs_action_check
   'login','logout','approve_guestbook','delete_guestbook','update_event','change_event_code','change_all_event_codes',
   'reject_guestbook','feature_guestbook','update_rsvp','delete_rsvp','create_guest','update_guest','delete_guest',
   'update_settings','update_homepage','create_notification','delete_notification','create_profile','update_profile',
-  'delete_profile','force_logout','block_visitor','unblock_visitor','visitor_session'
+  'delete_profile','force_logout','block_visitor','unblock_visitor','visitor_session','save_homepage_draft','publish_homepage'
 ));

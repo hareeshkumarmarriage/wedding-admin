@@ -58,6 +58,7 @@ export default async function handler(req,res){
     if(action==='list_sessions'){
       return json(res,200,{ok:true,sessions:await supa('/rest/v1/admin_sessions?select=*&revoked_at=is.null&order=last_seen_at.desc&limit=100')});
     }
+    if(action==='heartbeat'){const checkId=String(req.query?.id || (req.body||{}).id || '');if(!checkId)return json(res,400,{ok:false,error:'Session ID required.'});const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&select=id,user_id,revoked_at&limit=1`);if(!rows[0])return json(res,404,{ok:false,error:'Session not found.'});if(rows[0].revoked_at)return json(res,200,{ok:true,revoked:true});await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({last_seen_at:new Date().toISOString()})});return json(res,200,{ok:true,revoked:false});}
     if(action==='check_session'){
       const checkId=String(req.query?.id || (req.body||{}).id || '');
       if(!checkId) return json(res,400,{ok:false,error:'Session ID required.'});

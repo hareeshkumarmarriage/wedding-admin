@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Bell, Heart, X } from "lucide-react";
-import { getHomepageSections, type HomepageSectionRecord } from "@/lib/supabaseData";
+import { getHomepageSections, getSiteSettings, getPublicNotifications, type HomepageSectionRecord } from "@/lib/supabaseData";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/wedding/Navbar";
 import HeroSection from "@/components/wedding/HeroSection";
@@ -14,7 +14,6 @@ import GuestbookSection from "@/components/wedding/GuestbookSection";
 import IntroVideoOverlay from "@/components/wedding/IntroVideoOverlay";
 import RsvpSection from "@/components/wedding/RsvpSection";
 import ShareWedding from "@/components/wedding/ShareWedding";
-import { getPublicNotifications } from "@/lib/supabaseData";
 
 const Index = () => {
   const [showIntro, setShowIntro] = useState(false);
@@ -30,7 +29,7 @@ const Index = () => {
 
   useEffect(() => {
     getHomepageSections().then(setSections).catch(() => {});
-    import("@/lib/supabaseData").then(({ getSiteSettings }) => getSiteSettings()).then((rawSettings) => {
+    getSiteSettings().then((rawSettings) => {
       const useDraft = new URLSearchParams(window.location.search).get("preview") === "draft";
       const draft = useDraft && rawSettings.siteDraft?.wedding ? rawSettings.siteDraft : null;
       const settings = draft ? { ...rawSettings, wedding: draft.wedding || rawSettings.wedding, theme: draft.theme || rawSettings.theme, siteControl: draft.siteControl || rawSettings.siteControl } : rawSettings;
@@ -69,16 +68,29 @@ const Index = () => {
 
   useEffect(() => {
     if (showIntro) return;
-    const key = "wedding-public-viewer-device-id-v1";
-    const namedKey = "wedding-public-viewer-name-v1";
-    let deviceId = localStorage.getItem(key);
-    if (!deviceId) { deviceId = `${crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`}`; localStorage.setItem(key, deviceId); }
-    const saved = localStorage.getItem(namedKey);
-    if (saved) {
-      fetch("/api/visitor-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device_id: deviceId, visitor_name: saved }) }).then(r=>r.json()).then(d=>{ if(d.blocked) setVisitorBlocked(true); }).catch(()=>{});
-      return;
-    }
-    setVisitorPrompt(true);
+    const timer = window.setTimeout(() => {
+      const key = "wedding-public-viewer-device-id-v1";
+      const namedKey = "wedding-public-viewer-name-v1";
+      let deviceId = localStorage.getItem(key);
+      if (!deviceId) { deviceId = `${crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`}`; localStorage.setItem(key, deviceId); }
+      const saved = localStorage.getItem(namedKey);
+      if (saved) {
+        fetch("/api/visitor-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device_id: deviceId, visitor_name: saved }) }).then(r=>r.json()).then(d=>{ if(d.blocked) setVisitorBlocked(true); }).catch(()=>{});
+        return;
+      }
+      setVisitorPrompt(true);
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [showIntro]);
+
+  useEffect(() => {
+    if (showIntro) return;
+    const deviceId = localStorage.getItem("wedding-public-viewer-device-id-v1");
+    const visitorName = localStorage.getItem("wedding-public-viewer-name-v1");
+    if (!deviceId || !visitorName) return;
+    const heartbeat = () => fetch("/api/visitor-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device_id: deviceId, visitor_name: visitorName }) }).then(r=>r.json()).then(d=>{ if(d.blocked) setVisitorBlocked(true); }).catch(()=>{});
+    const timer = window.setInterval(heartbeat, 60000);
+    return () => window.clearInterval(timer);
   }, [showIntro]);
 
   useEffect(() => {
@@ -140,7 +152,7 @@ const Index = () => {
 
       {!showIntro && visitorPrompt && <div className="fixed inset-0 z-[12000] grid place-items-center bg-black/55 p-5 backdrop-blur-sm"><div className="w-full max-w-md rounded-3xl border border-primary/10 bg-white p-7 shadow-2xl"><p className="text-center text-xs uppercase tracking-[0.25em] text-primary">Welcome</p><h2 className="mt-2 text-center font-display text-3xl">May we know your name?</h2><p className="mt-2 text-center text-sm text-muted-foreground">This is asked only once on this device to personalize your visitor session.</p>{visitorBlocked ? <p className="mt-5 rounded-2xl bg-red-50 p-4 text-center text-sm text-red-700">Access from this device has been blocked by the administrator.</p> : <><input autoFocus value={visitorName} onChange={e=>setVisitorName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')void submitVisitorName()}} maxLength={80} placeholder="Your name" className="mt-5 h-12 w-full rounded-2xl border px-4"/><button type="button" onClick={()=>void submitVisitorName()} className="mt-4 h-12 w-full rounded-full bg-primary text-sm text-primary-foreground">Continue</button></>}</div></div>}
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showIntro && wedding.introEnabled !== false && (
           <IntroVideoOverlay onFinished={() => setShowIntro(false)} />
         )}
