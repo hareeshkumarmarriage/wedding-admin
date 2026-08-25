@@ -32,6 +32,7 @@ export default async function handler(req, res) {
   const event = String(req.query?.event || "");
   const type = req.query?.type === "video" ? "video/" : "image/";
   const pageToken = typeof req.query?.pageToken === "string" ? req.query.pageToken : "";
+  const requestedFolderId = typeof req.query?.folderId === "string" ? req.query.folderId.trim() : "";
   if (!EVENT_RE.test(event)) return res.status(400).json({ ok: false, error: "Invalid event" });
 
   const supabaseUrl = process.env.SUPABASE_URL || "";
@@ -50,15 +51,20 @@ export default async function handler(req, res) {
       folderId = String(settingsRows[0]?.value?.galleryDriveFolderId || "").trim();
       if (!folderId) return res.status(404).json({ ok: false, error: "Homepage gallery folder is not configured" });
     } else {
-      const eventResponse = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/events?select=drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,updated_at&slug=eq.${encodeURIComponent(event)}&is_active=eq.true&limit=1`, {
+      const eventResponse = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/events?select=drive_folder_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,updated_at&slug=eq.${encodeURIComponent(event)}&is_active=eq.true&limit=1`, {
         headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
       });
       if (!eventResponse.ok) return res.status(502).json({ ok: false, error: "Unable to load event media configuration" });
       const rows = await eventResponse.json();
       const codeVersion = rows[0]?.updated_at || "";
       if (!hasUnlock(req, event, codeVersion)) return res.status(401).json({ ok: false, error: "Event is locked" });
-      folderId = type === "video/" ? (rows[0]?.videos_drive_folder_id || rows[0]?.drive_folder_id) : (rows[0]?.photos_drive_folder_id || rows[0]?.drive_folder_id);
+      const configuredFolders = type === "video/"
+        ? [rows[0]?.videos_drive_folder_id, rows[0]?.videos_drive_folder_id_2, rows[0]?.drive_folder_id]
+        : [rows[0]?.photos_drive_folder_id, rows[0]?.photos_drive_folder_id_2, rows[0]?.drive_folder_id];
+      const allowedFolders = configuredFolders.map((value) => String(value || "").trim()).filter(Boolean);
+      folderId = requestedFolderId || allowedFolders[0] || "";
       if (!folderId) return res.status(404).json({ ok: false, error: "Event media folder not configured" });
+      if (!allowedFolders.includes(folderId)) return res.status(403).json({ ok: false, error: "Requested media folder is not configured for this event" });
     }
     const params = new URLSearchParams({
       q: `'${folderId}' in parents and trashed = false and mimeType contains '${type}'`,

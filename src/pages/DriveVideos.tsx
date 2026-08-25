@@ -113,7 +113,7 @@ const DriveVideos = () => {
     setLoading(true);
     setError("");
     setSelectedIndex(null);
-    getDriveVideosPage(event, eventRecord?.videos_drive_folder_id || eventRecord?.drive_folder_id).then((page) => {
+    getDriveVideosPage(event, (eventRecord?.videos_drive_folder_id || eventRecord?.drive_folder_id) + (eventRecord?.videos_drive_folder_id_2 ? `,${eventRecord.videos_drive_folder_id_2}` : "")).then((page) => {
       if (active) {
         setVideos(page.items);
         setVideoPageToken(page.nextPageToken);
@@ -128,7 +128,7 @@ const DriveVideos = () => {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [event, eventRecord?.videos_drive_folder_id, eventRecord?.drive_folder_id, videosEnabled, navigate, valid, unlocked]);
+  }, [event, eventRecord?.videos_drive_folder_id, eventRecord?.videos_drive_folder_id_2, eventRecord?.drive_folder_id, videosEnabled, navigate, valid, unlocked]);
 
   useEffect(() => {
     if (!loading && valid && Number.isInteger(requested) && requested >= 0 && requested < videos.length) setSelectedIndex(requested);
@@ -155,7 +155,7 @@ const DriveVideos = () => {
     setLoadingMore(true);
     setError("");
     try {
-      const page = await getDriveVideosPage(event, eventRecord?.videos_drive_folder_id || eventRecord?.drive_folder_id, videoPageToken);
+      const page = await getDriveVideosPage(event, (eventRecord?.videos_drive_folder_id || eventRecord?.drive_folder_id) + (eventRecord?.videos_drive_folder_id_2 ? `,${eventRecord.videos_drive_folder_id_2}` : ""), videoPageToken);
       setVideos((current) => [...current, ...page.items]);
       setVideoPageToken(page.nextPageToken);
     } catch (err) {

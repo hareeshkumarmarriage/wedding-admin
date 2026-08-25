@@ -20,6 +20,23 @@ const MEDIA_CACHE_TTL = 5 * 60 * 1000;
 const PAGE_SIZE = 60;
 const MAX_THUMBNAIL_SIZE = 1600;
 
+function splitFolderIds(folderId: string): string[] {
+  return String(folderId || "").split(",").map((id) => id.trim()).filter(Boolean);
+}
+
+function encodeMultiFolderToken(tokens: Array<string | null>): string {
+  return `multi:${btoa(JSON.stringify(tokens))}`;
+}
+
+function decodeMultiFolderToken(token: string | undefined, count: number): Array<string | undefined> {
+  if (!token || !token.startsWith("multi:")) return Array(count).fill(undefined);
+  try {
+    const parsed = JSON.parse(atob(token.slice(6))) as unknown;
+    if (Array.isArray(parsed)) return parsed.slice(0, count).map((value) => typeof value === "string" && value ? value : undefined);
+  } catch { /* fall back to first-page requests */ }
+  return Array(count).fill(undefined);
+}
+
 function readMediaCache<T>(key: string): T | null {
   try {
     const raw = sessionStorage.getItem(key);
@@ -70,7 +87,7 @@ async function fetchDrivePage<T extends DrivePhoto>(
   pageToken?: string,
 ): Promise<DrivePage<T>> {
   // Production uses the same-origin server proxy so the Drive API key never ships to the browser.
-  const serverParams = new URLSearchParams({ event: event || "", type: mimePrefix === "video/" ? "video" : "image" });
+  const serverParams = new URLSearchParams({ event: event || "", type: mimePrefix === "video/" ? "video" : "image", folderId });
   if (pageToken) serverParams.set("pageToken", pageToken);
 
   let response = await fetch(`/api/drive?${serverParams.toString()}`, { credentials: "same-origin", headers: { Accept: "application/json" } });
@@ -163,6 +180,25 @@ async function fetchDrivePage<T extends DrivePhoto>(
   };
 }
 
+async function getDriveMultiFolderPage<T extends DrivePhoto>(
+  event: string,
+  folderIdsValue: string,
+  mimePrefix: "image/" | "video/",
+  pageToken?: string,
+): Promise<DrivePage<T>> {
+  const folderIds = splitFolderIds(folderIdsValue);
+  if (!folderIds.length) throw new Error("Google Drive folder ID is missing.");
+  if (folderIds.length === 1) return fetchDrivePage<T>(event, folderIds[0], mimePrefix, pageToken);
+
+  const tokens = decodeMultiFolderToken(pageToken, folderIds.length);
+  const pages = await Promise.all(folderIds.map((folderId, index) => fetchDrivePage<T>(event, folderId, mimePrefix, tokens[index])));
+  const nextTokens = pages.map((page) => page.nextPageToken);
+  return {
+    items: pages.flatMap((page) => page.items),
+    nextPageToken: nextTokens.some(Boolean) ? encodeMultiFolderToken(nextTokens) : null,
+  };
+}
+
 export async function getDrivePhotosPage(
   _event?: string,
   folderId = DRIVE_FOLDER_ID,
@@ -172,7 +208,7 @@ export async function getDrivePhotosPage(
   const cached = readMediaCache<DrivePage<DrivePhoto>>(cacheKey);
   if (cached) return cached;
 
-  const page = await fetchDrivePage<DrivePhoto>(_event || "", folderId, "image/", pageToken);
+  const page = await getDriveMultiFolderPage<DrivePhoto>(_event || "", folderId, "image/", pageToken);
   writeMediaCache(cacheKey, page);
   return page;
 }
@@ -186,7 +222,7 @@ export async function getDriveVideosPage(
   const cached = readMediaCache<DrivePage<DriveVideo>>(cacheKey);
   if (cached) return cached;
 
-  const page = await fetchDrivePage<DriveVideo>(_event || "", folderId, "video/", pageToken);
+  const page = await getDriveMultiFolderPage<DriveVideo>(_event || "", folderId, "video/", pageToken);
   writeMediaCache(cacheKey, page);
   return page;
 }

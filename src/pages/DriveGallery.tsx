@@ -169,10 +169,10 @@ const DriveGallery = () => {
 
     Promise.all([
       photosEnabled
-        ? getDrivePhotosPage(event, eventRecord?.photos_drive_folder_id || eventRecord?.drive_folder_id)
+        ? getDrivePhotosPage(event, (eventRecord?.photos_drive_folder_id || eventRecord?.drive_folder_id) + (eventRecord?.photos_drive_folder_id_2 ? `,${eventRecord.photos_drive_folder_id_2}` : ""))
         : Promise.resolve({ items: [], nextPageToken: null }),
       videosEnabled
-        ? getDriveVideosPage(event, eventRecord?.videos_drive_folder_id || eventRecord?.drive_folder_id)
+        ? getDriveVideosPage(event, (eventRecord?.videos_drive_folder_id || eventRecord?.drive_folder_id) + (eventRecord?.videos_drive_folder_id_2 ? `,${eventRecord.videos_drive_folder_id_2}` : ""))
         : Promise.resolve({ items: [], nextPageToken: null }),
     ])
       .then(async ([photoPage, videoPage]) => {
@@ -198,7 +198,7 @@ const DriveGallery = () => {
       });
 
     return () => { active = false; };
-  }, [event, eventRecord?.photos_drive_folder_id, eventRecord?.videos_drive_folder_id, eventRecord?.drive_folder_id, photosEnabled, videosEnabled, unlocked, validEvent]);
+  }, [event, eventRecord?.photos_drive_folder_id, eventRecord?.photos_drive_folder_id_2, eventRecord?.videos_drive_folder_id, eventRecord?.videos_drive_folder_id_2, eventRecord?.drive_folder_id, photosEnabled, videosEnabled, unlocked, validEvent]);
 
   useEffect(() => {
     if (!validEvent) navigate("/#story", { replace: true });
@@ -264,7 +264,7 @@ const DriveGallery = () => {
     setLoadingMore(true);
     setError("");
     try {
-      const page = await getDrivePhotosPage(event, eventRecord?.photos_drive_folder_id || eventRecord?.drive_folder_id, photoPageToken);
+      const page = await getDrivePhotosPage(event, (eventRecord?.photos_drive_folder_id || eventRecord?.drive_folder_id) + (eventRecord?.photos_drive_folder_id_2 ? `,${eventRecord.photos_drive_folder_id_2}` : ""), photoPageToken);
       setPhotos((current) => [...current, ...page.items]);
       setPhotoPageToken(page.nextPageToken);
     } catch (err) {

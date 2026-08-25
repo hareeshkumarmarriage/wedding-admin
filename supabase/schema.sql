@@ -13,7 +13,9 @@ create table if not exists public.events (
   cover_image_drive_id text,
   drive_folder_id text not null,
   photos_drive_folder_id text,
+  photos_drive_folder_id_2 text,
   videos_drive_folder_id text,
+  videos_drive_folder_id_2 text,
   secret_code_hash text not null,
   secret_code_encrypted text,
   sort_order integer not null default 0,
@@ -115,7 +117,7 @@ alter table public.admin_audit_logs enable row level security;
 -- Keep secret_code_hash out of browser-visible data. The browser reads this view; only admins can read the base table.
 drop view if exists public.events_public;
 create view public.events_public as
-select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,updated_at
+select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,updated_at
 from public.events where is_active = true;
 grant select on public.events_public to anon, authenticated;
 
@@ -410,7 +412,9 @@ on conflict (id) do nothing;
 -- Separate Google Drive folders for photos and videos, plus a Drive image ID
 -- for each event cover. Existing drive_folder_id is retained for backward compatibility.
 alter table public.events add column if not exists photos_drive_folder_id text;
+alter table public.events add column if not exists photos_drive_folder_id_2 text;
 alter table public.events add column if not exists videos_drive_folder_id text;
+alter table public.events add column if not exists videos_drive_folder_id_2 text;
 alter table public.events add column if not exists cover_image_drive_id text;
 
 update public.events
@@ -425,8 +429,8 @@ where photos_drive_folder_id is null
 drop view if exists public.events_public;
 create view public.events_public as
 select id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,
-       photos_drive_folder_id,videos_drive_folder_id,sort_order,is_active,
+       photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,sort_order,is_active,
        photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,
-       venue_name,venue_address,maps_url
+       venue_name,venue_address,maps_url,updated_at
 from public.events where is_active = true;
 grant select on public.events_public to anon, authenticated;
