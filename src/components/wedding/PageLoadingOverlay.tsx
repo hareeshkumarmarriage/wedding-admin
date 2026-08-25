@@ -7,8 +7,11 @@ import { getSiteSettings } from "@/lib/supabaseData";
 const DEFAULT_DURATION = 1200;
 const LOADER_PLAYED_KEY = "wedding-loading-screen-played-v1";
 const LOADER_READY_KEY = "wedding-loading-screen-ready-path-v1";
+let loaderCompletionPath: string | null = null;
 
 const markReady = (pathname: string) => {
+  if (loaderCompletionPath === pathname) return;
+  loaderCompletionPath = pathname;
   try {
     sessionStorage.setItem(LOADER_READY_KEY, pathname);
   } catch {}
@@ -44,12 +47,9 @@ export default function PageLoadingOverlay() {
     const eligible = isHome || wedding.loadingAllPages === true;
     const playMode = wedding.loadingPlayMode === "always" ? "always" : "once";
 
-    // Clear the previous completion marker for this navigation cycle. This
-    // prevents an "always" loader from overlapping the intro on return to Home.
-    try { sessionStorage.removeItem(LOADER_READY_KEY); } catch {}
-
     if (!eligible) {
       setVisible(false);
+      loaderCompletionPath = null;
       return;
     }
 

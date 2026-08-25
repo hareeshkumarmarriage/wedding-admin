@@ -24,6 +24,8 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
   const [videoPlayMode, setVideoPlayMode] = useState<"once" | "always">("once");
   const [introSettingsReady, setIntroSettingsReady] = useState(false);
   const [shouldPlayVideo, setShouldPlayVideo] = useState(false);
+  const finishCalledRef = useRef(false);
+  const playStartedRef = useRef(false);
 
   useEffect(() => {
     getSiteSettings().then((settings) => {
@@ -47,7 +49,12 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
     try { alreadyPlayed = window.localStorage.getItem(playedKey) === "1"; } catch {}
     const playVideo = videoPlayMode === "always" || !alreadyPlayed;
     setShouldPlayVideo(playVideo);
-    if (!playVideo) onFinished();
+    finishCalledRef.current = false;
+    playStartedRef.current = false;
+    if (!playVideo && !finishCalledRef.current) {
+      finishCalledRef.current = true;
+      onFinished();
+    }
   }, [introSettingsReady, videoPlayMode, onFinished]);
 
   const sources = useMemo(() => driveFileIdFallbackUrls(videoId, "download"), [videoId]);
@@ -64,15 +71,17 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
     setSourceIndex(0);
     setVideoError(false);
     setVideoReady(false);
+    playStartedRef.current = false;
   }, [videoId]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !source || !autoplayEnabled || !shouldPlayVideo) return;
+    if (!video || !source || !autoplayEnabled || !shouldPlayVideo || !videoReady || playStartedRef.current) return;
     video.muted = muted;
     video.volume = muted ? 0 : 1;
-    void video.play().catch(() => undefined);
-  }, [source, autoplayEnabled, muted, shouldPlayVideo]);
+    playStartedRef.current = true;
+    void video.play().catch(() => { playStartedRef.current = false; });
+  }, [source, autoplayEnabled, muted, shouldPlayVideo, videoReady]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -126,7 +135,11 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
   };
 
   const finish = async () => {
-    if (shouldPlayVideo) window.localStorage.setItem("wedding-intro-video-played-v3", "1");
+    if (finishCalledRef.current) return;
+    finishCalledRef.current = true;
+    if (shouldPlayVideo) {
+      try { window.localStorage.setItem("wedding-intro-video-played-v3", "1"); } catch {}
+    }
     if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch {} }
     unlockOrientationIfPossible();
     onFinished();
@@ -135,7 +148,7 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
   return <motion.div ref={overlayRef} className="fixed inset-0 z-[11000] overflow-hidden bg-black" initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }} role="dialog" aria-label="Wedding introduction" aria-modal="true">
     <div className="absolute inset-0 bg-black">
       <img src={heroImage} alt="" aria-hidden="true" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-0" : "opacity-100"}`} />
-      {shouldPlayVideo && source && !videoError ? <video key={source} ref={videoRef} autoPlay={autoplayEnabled} muted={muted} playsInline preload="auto" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-100" : "opacity-0"} ${mobilePortrait ? "intro-video-mobile-portrait" : ""}`} src={source} onLoadedData={() => setVideoReady(true)} onCanPlay={() => setVideoReady(true)} onError={() => { if (sourceIndex + 1 < sources.length) { setSourceIndex((i) => i + 1); setVideoReady(false); } else setVideoError(true); }} onEnded={() => void finish()} /> : null}
+      {shouldPlayVideo && source && !videoError ? <video key={source} ref={videoRef} muted={muted} playsInline preload="auto" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-100" : "opacity-0"} ${mobilePortrait ? "intro-video-mobile-portrait" : ""}`} src={source} onLoadedData={() => setVideoReady(true)} onCanPlay={() => setVideoReady(true)} onError={() => { if (sourceIndex + 1 < sources.length) { setSourceIndex((i) => i + 1); setVideoReady(false); } else setVideoError(true); }} onEnded={() => void finish()} /> : null}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/55" />
     </div>
     <div className="absolute left-4 right-4 top-4 z-30 flex items-center justify-end gap-2 sm:left-6 sm:right-6 sm:top-6">

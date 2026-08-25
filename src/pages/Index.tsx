@@ -56,7 +56,15 @@ const Index = () => {
     let active = true;
     const readyKey = "wedding-loading-screen-ready-path-v1";
     const currentPath = window.location.pathname;
-    const show = () => { if (active) setShowIntro(true); };
+    const introShownKey = `wedding-intro-overlay-shown-v1:${currentPath}`;
+    const show = () => {
+      if (!active) return;
+      try {
+        if (sessionStorage.getItem(introShownKey) === "1") return;
+        sessionStorage.setItem(introShownKey, "1");
+      } catch {}
+      setShowIntro(true);
+    };
     let ready = false;
     try { ready = sessionStorage.getItem(readyKey) === currentPath; } catch {}
     if (ready) { show(); return () => { active = false; }; }
