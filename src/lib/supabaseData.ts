@@ -254,7 +254,7 @@ export async function deleteGuestbookMessage(
 
 export async function writeAdminAudit(
   token: string,
-  action: "login" | "logout" | "approve_guestbook" | "delete_guestbook" | "update_event" | "change_event_code" | "reject_guestbook" | "feature_guestbook" | "update_rsvp" | "delete_rsvp" | "create_guest" | "update_guest" | "delete_guest" | "update_settings" | "update_homepage" | "create_notification" | "delete_notification",
+  action: "login" | "logout" | "approve_guestbook" | "delete_guestbook" | "update_event" | "change_event_code" | "reject_guestbook" | "feature_guestbook" | "update_rsvp" | "delete_rsvp" | "create_guest" | "update_guest" | "delete_guest" | "update_settings" | "update_homepage" | "create_notification" | "delete_notification" | "create_profile" | "update_profile" | "delete_profile" | "force_logout" | "block_visitor" | "unblock_visitor" | "visitor_session",
   targetId?: string | null,
   details: Record<string, unknown> = {},
 ) {
@@ -374,6 +374,7 @@ export async function updateHomepageSections(token: string, sections: HomepageSe
 ========================================================= */
 export interface NotificationRecord { id: string; type: string; title: string; message: string; target: string | null; read_at: string | null; created_at: string; }
 export async function getNotifications(token: string) { return supabaseRest<NotificationRecord[]>("notifications", { token, query: "select=*&order=created_at.desc&limit=50" }); }
+export async function getPublicNotifications(limit=10) { if(!isSupabaseConfigured) return []; return supabaseRest<NotificationRecord[]>("notifications_public", { query: `limit=${limit}` }); }
 export async function createNotification(token: string, payload: Partial<NotificationRecord>) { return supabaseRest("notifications", { method: "POST", token, body: payload, prefer: "return=representation" }); }
 export async function markNotificationRead(token: string, id: string) { return supabaseRest("notifications", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: { read_at: new Date().toISOString() } }); }
 export async function deleteNotification(token: string, id: string) { return supabaseRest("notifications", { method: "DELETE", token, query: `id=eq.${encodeURIComponent(id)}` }); }
