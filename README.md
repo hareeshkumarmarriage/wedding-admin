@@ -107,3 +107,8 @@ Guest photo uploads are available at `/upload?event=<event-slug>` and use the pr
 - Existing legacy events contain only a one-way SHA-256 hash, so their old plaintext code cannot be recovered. Set a new code once to enable secure display.
 - Security Center includes a separate "Change all event codes" action for all active events.
 - Event unlock requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `EVENT_UNLOCK_SECRET`. If `EVENT_UNLOCK_SECRET` is omitted, the server derives the signing secret from the service-role key as a fallback; setting a dedicated random `EVENT_UNLOCK_SECRET` is still recommended.
+
+
+## Final Supabase repair migration
+
+After deploying this build, run `supabase/migrations/20260825_audit_and_sessions_repair.sql` in Supabase SQL Editor. It repairs the audit action constraint and policies, ensures admin/visitor session tables and public notifications view exist, and makes the Audit Log readable to admins.

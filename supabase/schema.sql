@@ -93,7 +93,7 @@ create index if not exists favorites_visitor_idx on public.favorites(visitor_id,
 create table if not exists public.admin_audit_logs (
   id uuid primary key default gen_random_uuid(),
   admin_id uuid references auth.users(id) on delete set null,
-  action text not null check (action in ('login','logout','approve_guestbook','delete_guestbook','update_event','change_event_code','change_all_event_codes')),
+  action text not null check (action in ('login','logout','approve_guestbook','delete_guestbook','reject_guestbook','feature_guestbook','update_event','change_event_code','change_all_event_codes','update_rsvp','delete_rsvp','create_guest','update_guest','delete_guest','update_settings','update_homepage','create_notification','delete_notification','create_profile','update_profile','delete_profile','force_logout','block_visitor','unblock_visitor','visitor_session','save_homepage_draft','publish_homepage')),
   target_id text,
   details jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
