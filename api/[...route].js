@@ -11,7 +11,7 @@ import rsvp from "../server/api/rsvp.js";
 import unlock from "../server/api/unlock.js";
 import visitorSession from "../server/api/visitor-session.js";
 
-const handlers = {
+const handlers = Object.freeze({
   "admin-event-code": adminEventCode,
   "admin-users": adminUsers,
   analytics,
@@ -24,18 +24,44 @@ const handlers = {
   rsvp,
   unlock,
   "visitor-session": visitorSession,
-};
+});
 
-export default async function handler(req, res) {
-  const rawRoute = req.query?.route;
-  const route = Array.isArray(rawRoute) ? rawRoute[0] : rawRoute;
-  const name = String(route || "").replace(/^\/|\/$/g, "");
-  const target = handlers[name];
-
-  if (!target) {
-    res.status(404).json({ ok: false, error: "API route not found." });
-    return;
+function getRoute(req) {
+  const queryRoute = req?.query?.route;
+  if (Array.isArray(queryRoute) && queryRoute.length) {
+    return queryRoute.map(String).join("/").replace(/^\/+|\/+$/g, "");
+  }
+  if (typeof queryRoute === "string" && queryRoute.trim()) {
+    return queryRoute.trim().replace(/^\/+|\/+$/g, "");
   }
 
-  return target(req, res);
+  const rawUrl = String(req?.url || "");
+  if (rawUrl) {
+    try {
+      const pathname = new URL(rawUrl, `https://${req?.headers?.host || "localhost"}`).pathname;
+      const match = pathname.match(/^\/api\/(.+?)(?:\/)?$/);
+      if (match) return decodeURIComponent(match[1]).replace(/^\/+|\/+$/g, "");
+    } catch {
+      const pathname = rawUrl.split("?", 1)[0].split("#", 1)[0];
+      const match = pathname.match(/^\/api\/(.+?)(?:\/)?$/);
+      if (match) return decodeURIComponent(match[1]).replace(/^\/+|\/+$/g, "");
+    }
+  }
+  return "";
+}
+
+export default async function handler(req, res) {
+  const name = getRoute(req);
+  const target = handlers[name];
+  if (!target) {
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(404).json({ ok: false, error: "API route not found.", route: name || null });
+  }
+  try {
+    return await target(req, res);
+  } catch (error) {
+    console.error(`[api/${name}]`, error);
+    if (res.headersSent) return;
+    return res.status(500).json({ ok: false, error: "Internal server error." });
+  }
 }
