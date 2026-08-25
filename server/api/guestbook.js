@@ -1,3 +1,4 @@
+import { durableRateLimit } from "./rateLimit.js";
 const attempts = new Map();
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
@@ -41,7 +42,7 @@ export default async function handler(req, res) {
   if (!sameOrigin(req)) return res.status(403).json({ ok: false, error: "Forbidden" });
 
   const ip = getIp(req);
-  if (rateLimit(ip)) {
+  if (rateLimit(ip) || !(await durableRateLimit(`guestbook:${ip}`, 600, 3))) {
     return res.status(429).json({ ok: false, error: "Too many messages. Please wait a few minutes." });
   }
 

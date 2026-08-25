@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 function sign(value) {
-  return crypto.createHmac("sha256", process.env.EVENT_UNLOCK_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "").update(value).digest("base64url");
+  return crypto.createHmac("sha256", process.env.EVENT_UNLOCK_SECRET || "").update(value).digest("base64url");
 }
 function getCookie(req, name) {
   const header = String(req.headers.cookie || "");

@@ -31,7 +31,9 @@ const Index = () => {
     getHomepageSections().then(setSections).catch(() => {});
     getSiteSettings().then((rawSettings) => {
       const useDraft = new URLSearchParams(window.location.search).get("preview") === "draft";
-      const draft = useDraft && rawSettings.siteDraft?.wedding ? rawSettings.siteDraft : null;
+      let localDraft:any=null;
+      if(useDraft){ try{ const raw=localStorage.getItem("wedding-admin-preview-draft"); localDraft=raw?JSON.parse(raw):null; }catch{} }
+      const draft = useDraft && (localDraft?.wedding || rawSettings.siteDraft?.wedding) ? (localDraft || rawSettings.siteDraft) : null;
       const settings = draft ? { ...rawSettings, wedding: draft.wedding || rawSettings.wedding, theme: draft.theme || rawSettings.theme, siteControl: draft.siteControl || rawSettings.siteControl } : rawSettings;
       setWedding(settings.wedding || {});
       setSiteControl({ mode: settings.siteControl?.mode || "all", pages: settings.siteControl?.pages || {}, maintenance: settings.siteControl?.maintenance || { enabled: false } });
@@ -132,7 +134,7 @@ const Index = () => {
             { key: "guestbook", enabled: true, sort_order: 7, label: "Guestbook" },
             { key: "blog", enabled: false, sort_order: 8, label: "Blog" },
             { key: "footer", enabled: true, sort_order: 9, label: "Footer" },
-          ]).filter((s) => s.enabled).map((section) => {
+          ]).filter((s) => s.enabled && (siteControl.mode !== "landing" || ["hero","events","footer"].includes(s.key))).map((section) => {
             switch (section.key) {
               case "hero": return <div key={section.key} id="home"><HeroSection /></div>;
               case "couple": return <div key={section.key} id="couple"><CoupleSection /></div>;

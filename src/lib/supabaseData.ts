@@ -350,7 +350,7 @@ export async function deleteGuest(token: string, id: string) { return supabaseRe
 export async function getSiteSettings() {
   if (!isSupabaseConfigured) return {} as Record<string, any>;
   try {
-    const rows = await supabaseRest<{ key: string; value: any }[]>("site_settings", { query: "select=key,value" });
+    const rows = await supabaseRest<{ key: string; value: any }[]>("site_settings_public", { query: "select=key,value" });
     return Object.fromEntries(rows.map((row) => [row.key, row.value]));
   } catch { return {}; }
 }
@@ -554,78 +554,15 @@ export async function savePhotoReaction(eventId: string, photoId: string, reacti
   } catch { /* reactions never block gallery */ }
 }
 
-export async function getRemoteFavoriteIds(
-  eventId: string
-) {
-  if (!isSupabaseConfigured) {
-    return [];
-  }
-
-  try {
-    const visitorId =
-      getVisitorId();
-
-    const rows =
-      await supabaseRest<any[]>(
-        "favorites",
-        {
-          query:
-            `select=photo_id` +
-            `&visitor_id=eq.${encodeURIComponent(visitorId)}` +
-            `&event_id=eq.${encodeURIComponent(eventId)}`,
-        }
-      );
-
-    return rows.map(
-      (row) => row.photo_id
-    );
-  } catch {
-    return [];
-  }
+export async function getRemoteFavoriteIds(_eventId: string) {
+  // Favorites are intentionally local-only until a server-issued visitor token
+  // is available. This prevents anonymous clients from writing trusted IDs.
+  return [];
 }
 
-export async function saveFavorite(
-  eventId: string,
-  photoId: string,
-  favorite: boolean
-) {
-  if (!isSupabaseConfigured) {
-    return;
-  }
-
-  const visitorId =
-    getVisitorId();
-
-  try {
-    if (favorite) {
-      await supabaseRest(
-        "favorites",
-        {
-          method: "POST",
-          body: {
-            visitor_id: visitorId,
-            event_id: eventId,
-            photo_id: photoId,
-          },
-          prefer:
-            "resolution=ignore-duplicates",
-        }
-      );
-    } else {
-      await supabaseRest(
-        "favorites",
-        {
-          method: "DELETE",
-          query:
-            `visitor_id=eq.${encodeURIComponent(visitorId)}` +
-            `&event_id=eq.${encodeURIComponent(eventId)}` +
-            `&photo_id=eq.${encodeURIComponent(photoId)}`,
-        }
-      );
-    }
-  } catch {
-    // Ignore favorite sync errors.
-  }
+export async function saveFavorite(_eventId: string, _photoId: string, _favorite: boolean) {
+  // Local favorites are persisted by weddingStorage.ts. Keep this no-op for
+  // backwards compatibility with older gallery callers.
 }
 
 /* =========================================================

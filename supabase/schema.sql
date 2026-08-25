@@ -103,7 +103,12 @@ create index if not exists admin_audit_logs_created_idx on public.admin_audit_lo
 
 -- Keep the audit action constraint current on existing databases too.
 alter table public.admin_audit_logs drop constraint if exists admin_audit_logs_action_check;
-alter table public.admin_audit_logs add constraint admin_audit_logs_action_check check (action in ('login','logout','approve_guestbook','delete_guestbook','update_event','change_event_code','change_all_event_codes','create_profile','update_profile','delete_profile','force_logout','block_visitor','unblock_visitor','visitor_session','save_homepage_draft','publish_homepage'));
+alter table public.admin_audit_logs add constraint admin_audit_logs_action_check check (action in (
+  'login','logout','approve_guestbook','delete_guestbook','update_event','change_event_code','change_all_event_codes',
+  'reject_guestbook','feature_guestbook','update_rsvp','delete_rsvp','create_guest','update_guest','delete_guest',
+  'update_settings','update_homepage','create_notification','delete_notification','create_profile','update_profile',
+  'delete_profile','force_logout','block_visitor','unblock_visitor','visitor_session','save_homepage_draft','publish_homepage'
+));
 
 
 
@@ -297,7 +302,8 @@ create table if not exists public.site_settings (
 );
 alter table public.site_settings enable row level security;
 drop policy if exists "public can read site settings" on public.site_settings;
-create policy "public can read site settings" on public.site_settings for select using (true);
+create policy "public can read published site settings" on public.site_settings
+for select using (key in ('wedding','theme','siteControl'));
 drop policy if exists "admins can manage site settings" on public.site_settings;
 create policy "admins can manage site settings" on public.site_settings for all using (public.is_admin()) with check (public.is_admin());
 
@@ -349,7 +355,66 @@ insert into public.site_settings(key,value) values
 ('siteDraft', '{}'::jsonb)
 on conflict (key) do nothing;
 
-create table if not exists public.homepage_sections (
+-- Public settings expose only published, non-admin content. Drafts/history remain admin-only.
+drop view if exists public.site_settings_public;
+create view public.site_settings_public as
+select key, value, updated_at from public.site_settings
+where key in ('wedding','theme','siteControl');
+grant select on public.site_settings_public to anon, authenticated;
+
+create table if not exists public.rate_limits (
+  key text primary key,
+  window_started_at timestamptz not null default now(),
+  request_count integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+alter table public.rate_limits enable row level security;
+drop policy if exists "admins can read rate limits" on public.rate_limits;
+create policy "admins can read rate limits" on public.rate_limits for select using (public.is_admin());
+
+create or replace function public.consume_rate_limit(p_key text, p_window_seconds integer, p_max integer)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  row_count integer;
+  started timestamptz;
+begin
+  insert into public.rate_limits(key, window_started_at, request_count, updated_at)
+  values (p_key, now(), 1, now())
+  on conflict (key) do update
+    set request_count = case when now() - rate_limits.window_started_at >= make_interval(secs => p_window_seconds) then 1 else rate_limits.request_count + 1 end,
+        window_started_at = case when now() - rate_limits.window_started_at >= make_interval(secs => p_window_seconds) then now() else rate_limits.window_started_at end,
+        updated_at = now()
+  returning request_count, window_started_at into row_count, started;
+  return row_count <= p_max;
+end;
+$$;
+revoke all on function public.consume_rate_limit(text, integer, integer) from public;
+grant execute on function public.consume_rate_limit(text, integer, integer) to service_role;
+
+create table if not exists public.visitor_sessions (
+  id uuid primary key default gen_random_uuid(),
+  visitor_token_hash text unique,
+  device_id text unique,
+  visitor_name text not null default '',
+  role text not null default 'visitor',
+  ip_address text,
+  ip_hash text,
+  device text,
+  user_agent text,
+  blocked boolean not null default false,
+  created_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now()
+);
+alter table public.visitor_sessions add column if not exists visitor_token_hash text;
+alter table public.visitor_sessions add column if not exists ip_hash text;
+create unique index if not exists visitor_sessions_token_idx on public.visitor_sessions(visitor_token_hash) where visitor_token_hash is not null;
+create index if not exists visitor_sessions_ip_hash_idx on public.visitor_sessions(ip_hash);
+
+create table if not exists public.homepage_sections ( (
   key text primary key,
   label text not null,
   enabled boolean not null default true,
@@ -445,14 +510,8 @@ create table if not exists public.admin_sessions (
   username text, role text not null default 'admin', ip_address text, device text, user_agent text,
   last_seen_at timestamptz not null default now(), created_at timestamptz not null default now(), revoked_at timestamptz
 );
-create index if not exists admin_sessions_active_idx on public.admin_sessions(last_seen_at desc) where revoked_at is null;
-create table if not exists public.visitor_sessions (
-  id uuid primary key default gen_random_uuid(), device_id text not null unique, visitor_name text not null,
-  role text not null default 'visitor', ip_address text, device text, user_agent text,
-  last_seen_at timestamptz not null default now(), created_at timestamptz not null default now(), blocked boolean not null default false
-);
-create index if not exists visitor_sessions_active_idx on public.visitor_sessions(last_seen_at desc);
 alter table public.admin_sessions enable row level security;
+create index if not exists admin_sessions_active_idx on public.admin_sessions(last_seen_at desc) where revoked_at is null;
 alter table public.visitor_sessions enable row level security;
 drop policy if exists "admins manage admin sessions" on public.admin_sessions;
 create policy "admins manage admin sessions" on public.admin_sessions for all using (public.is_admin()) with check (public.is_admin());

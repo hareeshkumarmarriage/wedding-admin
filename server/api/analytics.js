@@ -1,3 +1,4 @@
+import { durableRateLimit } from "./rateLimit.js";
 const attempts = new Map();
 const WINDOW_MS = 60 * 1000;
 const MAX_ATTEMPTS = 30;
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
   if (!sameOrigin(req)) return res.status(403).json({ ok: false, error: "Forbidden" });
-  if (limited(ip(req))) return res.status(429).json({ ok: false, error: "Too many requests" });
+  if (limited(ip(req)) || !(await durableRateLimit(`analytics:${ip(req)}`, 60, 30))) return res.status(429).json({ ok: false, error: "Too many requests" });
 
   const body = req.body || {};
   const mediaType = typeof body.media_type === "string" ? body.media_type : "";

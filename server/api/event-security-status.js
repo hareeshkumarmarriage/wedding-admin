@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  const unlockSecret = process.env.EVENT_UNLOCK_SECRET || serviceKey || "";
+  const unlockSecret = process.env.EVENT_UNLOCK_SECRET || "";
   return res.status(200).json({
     ok: true,
     supabase: Boolean(supabaseUrl && anonKey),

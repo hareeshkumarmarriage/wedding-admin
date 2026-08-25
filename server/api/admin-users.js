@@ -37,12 +37,27 @@ export default async function handler(req,res){
     const id=String((req.body||{}).id||''); if(!id) return json(res,400,{ok:false,error:'User ID is required.'});
     if(action==='update'){
       const {email,password,username,display_name,role}=req.body||{};
+      const currentUser=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:headers(token)}).then(r=>r.ok?r.json():null);
+      if(!currentUser?.id)return json(res,401,{ok:false,error:'Invalid admin session.'});
+      const requestedRole=role==='admin'?'admin':'guest';
+      if(password && String(password).length<8)return json(res,400,{ok:false,error:'Password must be at least 8 characters.'});
+      if(id===currentUser.id && requestedRole!=='admin')return json(res,400,{ok:false,error:'You cannot demote your own active admin account.'});
+      const profiles=await supa('/rest/v1/profiles?select=id,role');
+      const adminCount=(profiles||[]).filter(p=>p.role==='admin').length;
+      const target=(profiles||[]).find(p=>p.id===id);
+      if(target?.role==='admin' && requestedRole!=='admin' && adminCount<=1)return json(res,400,{ok:false,error:'The last administrator cannot be demoted.'});
       const patch={}; if(email)patch.email=email; if(password)patch.password=password;
       if(Object.keys(patch).length) await supa(`/auth/v1/admin/users/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify(patch)});
-      await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({username,display_name,role:role==='admin'?'admin':'guest',updated_at:new Date().toISOString()})});
+      await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({username,display_name,role:requestedRole,updated_at:new Date().toISOString()})});
       return json(res,200,{ok:true});
     }
     if(action==='delete'){
+      const currentUser=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:headers(token)}).then(r=>r.ok?r.json():null);
+      if(currentUser?.id===id)return json(res,400,{ok:false,error:'You cannot delete your own active admin account.'});
+      const profiles=await supa('/rest/v1/profiles?select=id,role');
+      const adminCount=(profiles||[]).filter(p=>p.role==='admin').length;
+      const target=(profiles||[]).find(p=>p.id===id);
+      if(target?.role==='admin' && adminCount<=1)return json(res,400,{ok:false,error:'The last administrator cannot be deleted.'});
       await supa(`/auth/v1/admin/users/${encodeURIComponent(id)}`,{method:'DELETE'});
       return json(res,200,{ok:true});
     }

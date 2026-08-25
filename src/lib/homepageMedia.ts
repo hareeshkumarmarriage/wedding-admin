@@ -20,18 +20,16 @@ export function driveFileIdFallbackUrls(fileId: string, _mode: "view" | "downloa
 export function youtubeEmbedUrl(value: string) {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.includes("youtube.com/embed/")) return raw;
   try {
     const url = new URL(raw);
-    const host = url.hostname.replace(/^www\./, "");
+    const host = url.hostname.toLowerCase();
+    const allowed = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]);
+    if (!allowed.has(host)) return "";
     let id = "";
-    if (host === "youtu.be") id = url.pathname.slice(1);
-    else if (host === "youtube.com" || host === "m.youtube.com") {
-      if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
-      else if (url.pathname.startsWith("/shorts/")) id = url.pathname.split("/")[2] || "";
-      else if (url.pathname.startsWith("/embed/")) id = url.pathname.split("/")[2] || "";
-    }
-    if (id) return `https://www.youtube.com/embed/${encodeURIComponent(id)}`;
-  } catch {}
-  return raw;
+    if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
+    else if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
+    else if (/^\/(shorts|embed)\//.test(url.pathname)) id = url.pathname.split("/").filter(Boolean)[1] || "";
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return "";
+    return `https://www.youtube-nocookie.com/embed/${id}`;
+  } catch { return ""; }
 }

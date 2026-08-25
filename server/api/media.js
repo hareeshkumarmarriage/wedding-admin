@@ -18,9 +18,20 @@ export default async function handler(req, res) {
     // Covers are Drive images. Resolve the Drive thumbnail first, just like the
     // gallery does. Drive's files.get alt=media endpoint is not reliable for
     // browser-facing image previews with an API key, while thumbnailLink is.
+    const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    if (!supabaseUrl || !serviceKey) return res.status(503).json({ ok: false, error: "Media service is not configured" });
+    const settingsResponse = await fetch(`${supabaseUrl}/rest/v1/site_settings?select=value&key=eq.wedding&limit=1`, { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } });
+    const settingsRows = settingsResponse.ok ? await settingsResponse.json() : [];
+    const wedding = settingsRows?.[0]?.value || {};
+    const allowedIds = new Set([wedding.heroImageDriveId, wedding.groomImageDriveId, wedding.brideImageDriveId, wedding.loadingLogoDriveId].map(String).filter(Boolean));
+    const eventsResponse = await fetch(`${supabaseUrl}/rest/v1/events_public?select=cover_image_drive_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,drive_folder_id`, { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } });
+    const publicFolders=new Set();
+    if (eventsResponse.ok) for (const ev of await eventsResponse.json()) { for(const value of [ev.cover_image_drive_id,ev.photos_drive_folder_id,ev.photos_drive_folder_id_2,ev.videos_drive_folder_id,ev.videos_drive_folder_id_2,ev.drive_folder_id]) if(value) { const v=String(value); allowedIds.add(v); publicFolders.add(v); } }
+
     const metadataUrl = new URL(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`);
     metadataUrl.searchParams.set("key", driveKey);
-    metadataUrl.searchParams.set("fields", "id,name,mimeType,thumbnailLink,resourceKey");
+    metadataUrl.searchParams.set("fields", "id,name,mimeType,thumbnailLink,resourceKey,parents");
     const metadataResponse = await fetch(metadataUrl);
     const metadata = await metadataResponse.json().catch(() => ({}));
     if (!metadataResponse.ok) {
@@ -28,6 +39,8 @@ export default async function handler(req, res) {
       return res.status(metadataResponse.status === 404 ? 404 : metadataResponse.status === 403 ? 403 : 502).json({ ok: false, error: message });
     }
 
+    const parentAllowed = Array.isArray(metadata.parents) && metadata.parents.some((parent) => publicFolders.has(String(parent)));
+    if (!allowedIds.has(id) && !parentAllowed) return res.status(403).json({ ok: false, error: "Media file is not published." });
     const isImage = String(metadata.mimeType || "").startsWith("image/");
     let response;
     if (isImage && metadata.thumbnailLink) {

@@ -1,3 +1,4 @@
+import { durableRateLimit } from "./rateLimit.js";
 const attempts = new Map();
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -26,7 +27,7 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
   if (!sameOrigin(req)) return res.status(403).json({ ok: false, error: "Forbidden" });
-  if (limited(getIp(req))) return res.status(429).json({ ok: false, error: "Too many RSVP submissions. Please wait a few minutes." });
+  if (limited(getIp(req)) || !(await durableRateLimit(`rsvp:${getIp(req)}`, 600, 5))) return res.status(429).json({ ok: false, error: "Too many RSVP submissions. Please wait a few minutes." });
 
   const body = req.body || {};
   const name = typeof body.name === "string" ? body.name.trim() : "";

@@ -1,3 +1,4 @@
+import { safeGoogleMapsUrl } from "@/lib/safeUrls";
 import { motion } from "framer-motion";
 import { Wine, Church, Camera, UtensilsCrossed, LogOut, Music2, Cake } from "lucide-react";
 import { getSiteSettings, getEvents, type EventRecord } from "@/lib/supabaseData";
@@ -33,7 +34,7 @@ const EventsSection = () => {
           <p className="font-body text-sm text-muted-foreground mt-1">{weddingEvent?.venue_name || content.venue || "Kolping Community Hall"} <br/> {weddingEvent?.venue_address || content.address || "5th Ln, Postal Colony, Donka Road, Guntur-522002, Andhra Pradesh"}</p>
         </div>
 
-        {(weddingEvent?.maps_url || content.mapsUrl) && <div className="flex justify-center text-center"><a href={weddingEvent?.maps_url || content.mapsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-primary/20 px-5 py-2 text-xs uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground">Open Location in Google Maps</a></div>}
+        {safeGoogleMapsUrl(weddingEvent?.maps_url || content.mapsUrl) && <div className="flex justify-center text-center"><a href={safeGoogleMapsUrl(weddingEvent?.maps_url || content.mapsUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-primary/20 px-5 py-2 text-xs uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground">Open Location in Google Maps</a></div>}
 
         <div className="mt-12 max-w-3xl mx-auto">
           <div className="relative">

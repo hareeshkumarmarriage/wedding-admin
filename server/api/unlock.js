@@ -1,3 +1,4 @@
+import { durableRateLimit } from "./rateLimit.js";
 import crypto from "node:crypto";
 
 const attempts = new Map();
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
     ? forwarded[0]
     : String(forwarded || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
 
-  if (rateLimit(ip)) {
+  if (rateLimit(ip) || !(await durableRateLimit(`unlock:${ip}`, 60, 10))) {
     return res.status(429).json({ ok: false, error: "Too many attempts. Please wait a minute and try again." });
   }
 
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
 
   const supabaseUrl = process.env.SUPABASE_URL || "";
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  const unlockSecret = process.env.EVENT_UNLOCK_SECRET || serviceKey || "";
+  const unlockSecret = process.env.EVENT_UNLOCK_SECRET || "";
   if (!supabaseUrl || !serviceKey || !unlockSecret) {
     const missing = [!supabaseUrl ? "SUPABASE_URL" : "", !serviceKey ? "SUPABASE_SERVICE_ROLE_KEY" : "", !unlockSecret ? "EVENT_UNLOCK_SECRET" : ""].filter(Boolean);
     return res.status(503).json({ ok: false, error: `Event security is not configured. Missing: ${missing.join(", ")}.` });

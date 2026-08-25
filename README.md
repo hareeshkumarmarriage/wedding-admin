@@ -112,3 +112,12 @@ Guest photo uploads are available at `/upload?event=<event-slug>` and use the pr
 ## Final Supabase repair migration
 
 After deploying this build, run `supabase/migrations/20260825_audit_and_sessions_repair.sql` in Supabase SQL Editor. It repairs the audit action constraint and policies, ensures admin/visitor session tables and public notifications view exist, and makes the Audit Log readable to admins.
+
+
+## Production security requirements
+
+- Set `EVENT_UNLOCK_SECRET` to a long random server-only secret. It is required for event unlock signing/encryption.
+- Do not expose `SUPABASE_SERVICE_ROLE_KEY` or `GOOGLE_DRIVE_API_KEY` through `VITE_` variables.
+- Run `npm run test:all` before production deploys.
+- Run the latest `supabase/schema.sql` migration after deploying this version.
+- Favorites are intentionally local-only until a server-issued visitor identity is enabled.

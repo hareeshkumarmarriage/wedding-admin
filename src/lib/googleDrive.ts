@@ -15,7 +15,6 @@ export interface DrivePage<T> {
   nextPageToken: string | null;
 }
 
-const API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY;
 const MEDIA_CACHE_TTL = 5 * 60 * 1000;
 const PAGE_SIZE = 60;
 const MAX_THUMBNAIL_SIZE = 1600;
@@ -68,16 +67,7 @@ export const DRIVE_FOLDER_ID =
   import.meta.env.VITE_GOOGLE_DRIVE_FOLDER_ID || "";
 
 function requireDriveConfig(folderId: string) {
-  if (!API_KEY) {
-    throw new Error(
-      "Google Drive API key is missing. Add VITE_GOOGLE_DRIVE_API_KEY to your .env file.",
-    );
-  }
-  if (!folderId) {
-    throw new Error(
-      "Google Drive folder ID is missing. Add VITE_GOOGLE_DRIVE_FOLDER_ID to your .env file.",
-    );
-  }
+  if (!folderId) throw new Error("Google Drive folder ID is missing.");
 }
 
 async function fetchDrivePage<T extends DrivePhoto>(
@@ -92,21 +82,6 @@ async function fetchDrivePage<T extends DrivePhoto>(
 
   let response = await fetch(`/api/drive?${serverParams.toString()}`, { credentials: "same-origin", headers: { Accept: "application/json" } });
 
-  // Local development fallback keeps the project usable without Vercel functions.
-  if (response.status === 404 && API_KEY) {
-    requireDriveConfig(folderId);
-    const params = new URLSearchParams({
-      q: `'${folderId}' in parents and trashed = false and mimeType contains '${mimePrefix}'`,
-      key: API_KEY,
-      pageSize: String(PAGE_SIZE),
-      fields: mimePrefix === "image/"
-        ? "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,imageMediaMetadata(width,height))"
-        : "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,videoMediaMetadata(width,height,durationMillis))",
-      orderBy: "name_natural",
-    });
-    if (pageToken) params.set("pageToken", pageToken);
-    response = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, { headers: { Accept: "application/json" } });
-  }
 
   if (!response.ok) {
     let detail = "";
@@ -117,34 +92,7 @@ async function fetchDrivePage<T extends DrivePhoto>(
       // Ignore non-JSON error responses.
     }
 
-    // If the server-side proxy is unavailable/misconfigured in local development
-    // (or on a static host), fall back to the browser Drive API when a VITE key
-    // was intentionally configured. Never bypass a 401/403 event lock.
-    if (API_KEY && [404, 500, 502, 503, 504].includes(response.status)) {
-      requireDriveConfig(folderId);
-      const params = new URLSearchParams({
-        q: `'${folderId}' in parents and trashed = false and mimeType contains '${mimePrefix}'`,
-        key: API_KEY,
-        pageSize: String(PAGE_SIZE),
-        fields: mimePrefix === "image/"
-          ? "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,imageMediaMetadata(width,height))"
-          : "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,videoMediaMetadata(width,height,durationMillis))",
-        orderBy: "name_natural",
-      });
-      if (pageToken) params.set("pageToken", pageToken);
-      const direct = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, { headers: { Accept: "application/json" } });
-      if (!direct.ok) {
-        let directDetail = "";
-        try {
-          const body = await direct.json();
-          directDetail = body?.error?.message ? ` ${body.error.message}` : "";
-        } catch {}
-        throw new Error(`Unable to load Google Drive media.${directDetail}`);
-      }
-      response = direct;
-    } else {
-      throw new Error(`Unable to load Google Drive media.${detail}`);
-    }
+    throw new Error(`Unable to load Google Drive media.${detail}`);
   }
 
   const data = (await response.json()) as {
@@ -284,14 +232,10 @@ export function getDriveImageUrl(
   if (file.thumbnailLink) {
     return resizeThumbnailUrl(file.thumbnailLink, Math.min(size, 2200));
   }
-  if (!API_KEY || !file.id) return "";
-
-  const params = new URLSearchParams({
-    alt: "media",
-    key: API_KEY,
-  });
+  if (!file.id) return "";
+  const params = new URLSearchParams({ id: file.id, size: String(Math.max(400, Math.min(size, 2000))) });
   if (file.resourceKey) params.set("resourceKey", file.resourceKey);
-  return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?${params.toString()}`;
+  return `/api/media?${params.toString()}`;
 }
 
 export function getDriveCoverImageUrl(

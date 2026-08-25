@@ -15,7 +15,7 @@ function hashCode(code) {
 }
 
 function encryptionKey() {
-  const secret = process.env.EVENT_UNLOCK_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const secret = process.env.EVENT_UNLOCK_SECRET || "";
   return crypto.createHash("sha256").update(`wedding-admin-code:${secret}`, "utf8").digest();
 }
 
