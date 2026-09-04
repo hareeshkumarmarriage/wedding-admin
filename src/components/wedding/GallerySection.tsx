@@ -1,56 +1,72 @@
 import { motion } from "framer-motion";
+import { Camera } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getDriveImageUrl, getDrivePhotosPage, type DrivePhoto } from "@/lib/googleDrive";
 import { getSiteSettings } from "@/lib/supabaseData";
-import galleryFallback from "@/assets/gallery-1.jpg";
 
 type WeddingSettings = {
-  galleryDriveFolderId?: string;
-  galleryLimit?: number;
   galleryHeading?: string;
   galleryDescription?: string;
 };
 
 const GallerySection = () => {
-  const [photos, setPhotos] = useState<DrivePhoto[]>([]);
-  const [folderId, setFolderId] = useState("");
   const [content, setContent] = useState<WeddingSettings>({});
 
   useEffect(() => {
     let active = true;
-    getSiteSettings().then(async (settings) => {
-      const wedding = settings.wedding as WeddingSettings | undefined;
-      const folder = String(wedding?.galleryDriveFolderId || "").trim();
-      if (!active) return;
-      setFolderId(folder);
-      setContent(wedding || {});
-      if (!folder) return;
-      try {
-        const page = await getDrivePhotosPage("homepage", folder);
-        if (active) setPhotos(page.items.slice(0, Number(wedding?.galleryLimit || 14)));
-      } catch {
-        if (active) setPhotos([]);
-      }
-    }).catch(() => {});
-    return () => { active = false; };
+    getSiteSettings()
+      .then((settings) => {
+        if (active) setContent((settings.wedding || {}) as WeddingSettings);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const images = photos.length ? photos : [{ id: "fallback", name: "Wedding moment", mimeType: "image/jpeg", thumbnailLink: galleryFallback } as DrivePhoto];
+  return (
+    <section className="bg-background py-20 md:py-28">
+      <div className="wedding-container">
+        <div className="mx-auto max-w-2xl text-center">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="section-subtitle mb-3"
+          >
+            {content.galleryHeading || "Sweet Memories"}
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="section-title"
+          >
+            {content.galleryDescription || "Our Captured Moments"}
+          </motion.h2>
 
-  return <section className="py-20 md:py-28 bg-background">
-    <div className="wedding-container">
-      <div className="text-center mb-16">
-        <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="section-subtitle mb-3">{content.galleryHeading || "Sweet Memories"}</motion.p>
-        <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="section-title">{content.galleryDescription || "Our Captured Moments"}</motion.h2>
-        {folderId && <a href={`https://drive.google.com/drive/folders/${encodeURIComponent(folderId)}`} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs uppercase tracking-widest text-primary">View gallery folder</a>}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mx-auto mt-8 max-w-xl rounded-3xl border border-primary/10 bg-white/70 p-8 shadow-sm"
+          >
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
+              <Camera size={24} />
+            </div>
+            <p className="mt-5 text-sm leading-6 text-muted-foreground">
+              Photos and videos are available inside each event gallery so every celebration has its own memories, favorites, slideshow, and secure access.
+            </p>
+            <a
+              href="#events"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-xs font-medium uppercase tracking-widest text-primary-foreground hover:opacity-90"
+            >
+              Explore Events
+            </a>
+          </motion.div>
+        </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[200px]">
-        {images.map((img, i) => <motion.div key={img.id || i} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} className={`relative overflow-hidden rounded-xl shadow-md group ${i === 0 || i === 5 ? "md:row-span-2" : ""}`}>
-          <img src={getDriveImageUrl(img, 1600) || galleryFallback} alt={img.name || `Wedding moment ${i + 1}`} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-        </motion.div>)}
-      </div>
-    </div>
-  </section>;
+    </section>
+  );
 };
 
 export default GallerySection;
