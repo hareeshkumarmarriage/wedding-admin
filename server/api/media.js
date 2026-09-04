@@ -1,7 +1,9 @@
 const ID_RE = /^[A-Za-z0-9_-]{10,}$/;
 
 export default async function handler(req, res) {
-  res.setHeader("Cache-Control", "public, max-age=300, s-maxage=3600");
+  // Wedding media is admin-configurable; never let Vercel/browser caches keep
+  // an old cover image or video after an Admin change.
+  res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
   res.setHeader("X-Content-Type-Options", "nosniff");
 
   if (req.method !== "GET" && req.method !== "HEAD") {
@@ -15,12 +17,11 @@ export default async function handler(req, res) {
   if (!driveKey) return res.status(503).json({ ok: false, error: "Google Drive media service is not configured" });
 
   try {
-    // Publicly renderable wedding media must be explicitly configured in the
-    // published settings/events data. This keeps the proxy private-by-default.
     const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
     if (!supabaseUrl || !serviceKey) return res.status(503).json({ ok: false, error: "Media service is not configured" });
-    const settingsResponse = await fetch(`${supabaseUrl}/rest/v1/site_settings?select=value&key=eq.wedding&limit=1`, { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } });
+    const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` };
+    const settingsResponse = await fetch(`${supabaseUrl}/rest/v1/site_settings?select=value&key=eq.wedding&limit=1`, { headers, cache: "no-store" });
     const settingsRows = settingsResponse.ok ? await settingsResponse.json() : [];
     const wedding = settingsRows?.[0]?.value || {};
     const allowedIds = new Set([
@@ -30,7 +31,7 @@ export default async function handler(req, res) {
       wedding.loadingLogoDriveId,
       wedding.introVideoDriveId,
     ].map(String).filter(Boolean));
-    const eventsResponse = await fetch(`${supabaseUrl}/rest/v1/events_public?select=cover_image_drive_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,drive_folder_id`, { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } });
+    const eventsResponse = await fetch(`${supabaseUrl}/rest/v1/events_public?select=cover_image_drive_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,drive_folder_id`, { headers, cache: "no-store" });
     const publicFolders = new Set();
     if (eventsResponse.ok) {
       for (const ev of await eventsResponse.json()) {
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
     const metadataUrl = new URL(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`);
     metadataUrl.searchParams.set("key", driveKey);
     metadataUrl.searchParams.set("fields", "id,name,mimeType,thumbnailLink,resourceKey,parents");
-    const metadataResponse = await fetch(metadataUrl);
+    const metadataResponse = await fetch(metadataUrl, { cache: "no-store" });
     const metadata = await metadataResponse.json().catch(() => ({}));
     if (!metadataResponse.ok) {
       const message = metadata?.error?.message || "Google Drive file is not accessible.";
@@ -60,16 +61,16 @@ export default async function handler(req, res) {
       const safeSize = Number.isFinite(requestedSize) ? Math.max(400, Math.min(requestedSize, 2000)) : 1600;
       if (thumbnail.searchParams.has("sz")) thumbnail.searchParams.set("sz", `w${safeSize}`);
       else if (/=s\d+/.test(thumbnail.toString())) thumbnail.href = thumbnail.toString().replace(/=s\d+/, `=s${safeSize}`);
-      response = await fetch(thumbnail, { method: req.method });
+      response = await fetch(thumbnail, { method: req.method, cache: "no-store" });
     } else {
       const url = new URL(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`);
       url.searchParams.set("alt", "media");
       url.searchParams.set("key", driveKey);
       if (metadata.resourceKey) url.searchParams.set("resourceKey", metadata.resourceKey);
-      const headers = {};
+      const mediaHeaders = {};
       const range = req.headers.range;
-      if (typeof range === "string" && range) headers.Range = range;
-      response = await fetch(url, { method: req.method, headers });
+      if (typeof range === "string" && range) mediaHeaders.Range = range;
+      response = await fetch(url, { method: req.method, headers: mediaHeaders, cache: "no-store" });
     }
 
     if (!response.ok) {
