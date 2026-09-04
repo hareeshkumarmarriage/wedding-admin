@@ -1,4 +1,6 @@
 import {
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
   isSupabaseConfigured,
   supabaseRest,
 } from "./supabase";
@@ -130,7 +132,7 @@ export async function deleteGuestbookMessage(token: string, id: string) {
   return supabaseRest("guestbook", { method: "DELETE", token, query: `id=eq.${encodeURIComponent(id)}` });
 }
 
-export async function writeAdminAudit(token: string, action: "login" | "logout" | "approve_guestbook" | "delete_guestbook" | "update_event" | "change_event_code" | "reject_guestbook" | "feature_guestbook" | "update_rsvp" | "delete_rsvp" | "create_guest" | "update_guest" | "delete_guest" | "update_settings" | "update_homepage" | "create_notification" | "delete_notification" | "create_profile" | "update_profile" | "delete_profile" | "force_logout" | "block_visitor" | "unblock_visitor" | "visitor_session" | "save_homepage_draft" | "publish_homepage", targetId?: string | null, details: Record<string, unknown> = {}) {
+export async function writeAdminAudit(token: string, action: "login" | "logout" | "approve_guestbook" | "delete_guestbook" | "update_event" | "change_event_code" | "change_all_event_codes" | "reject_guestbook" | "feature_guestbook" | "update_rsvp" | "delete_rsvp" | "create_guest" | "update_guest" | "delete_guest" | "update_settings" | "update_homepage" | "create_notification" | "delete_notification" | "create_profile" | "update_profile" | "delete_profile" | "force_logout" | "block_visitor" | "unblock_visitor" | "visitor_session" | "save_homepage_draft" | "publish_homepage", targetId?: string | null, details: Record<string, unknown> = {}) {
   if (!token) return;
   try {
     const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` } });
