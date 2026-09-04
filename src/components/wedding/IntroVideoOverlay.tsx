@@ -7,6 +7,14 @@ import { driveFileIdFallbackUrls } from "@/lib/homepageMedia";
 
 const DEFAULT_INTRO_VIDEO_FILE_ID = "1ANoJPcBbypy3IRRVx8WMxGo5uEXMd6nW";
 
+type WeddingSettings = {
+  introVideoDriveId?: string;
+  introAutoplay?: boolean;
+  introMuted?: boolean;
+  introMobilePortrait?: boolean;
+  introVideoPlayMode?: "once" | "always";
+};
+
 interface IntroVideoOverlayProps { onFinished: () => void; }
 
 export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps) {
@@ -29,12 +37,13 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
 
   useEffect(() => {
     getSiteSettings().then((settings) => {
-      const id = String(settings.wedding?.introVideoDriveId || "").trim();
+      const wedding = settings.wedding as WeddingSettings | undefined;
+      const id = String(wedding?.introVideoDriveId || "").trim();
       setVideoId(id || DEFAULT_INTRO_VIDEO_FILE_ID);
-      setAutoplayEnabled(settings.wedding?.introAutoplay !== false);
-      setMuted(settings.wedding?.introMuted !== false);
-      setMobilePortrait(settings.wedding?.introMobilePortrait === true);
-      setVideoPlayMode(settings.wedding?.introVideoPlayMode === "always" ? "always" : "once");
+      setAutoplayEnabled(wedding?.introAutoplay !== false);
+      setMuted(wedding?.introMuted !== false);
+      setMobilePortrait(wedding?.introMobilePortrait === true);
+      setVideoPlayMode(wedding?.introVideoPlayMode === "always" ? "always" : "once");
       setSourceIndex(0);
       setVideoError(false);
       setVideoReady(false);
@@ -129,7 +138,6 @@ export default function IntroVideoOverlay({ onFinished }: IntroVideoOverlayProps
         return;
       }
       await overlay.requestFullscreen();
-      // Portrait locking applies only while the intro overlay itself is fullscreen.
       await lockPortraitIfPossible();
     } catch {}
   };
