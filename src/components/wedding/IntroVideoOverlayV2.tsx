@@ -23,10 +23,9 @@ export default function IntroVideoOverlayV2({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [settingsReady, setSettingsReady] = useState(Boolean(suppliedSettings));
   const [settings, setSettings] = useState<WeddingSettings | undefined>(suppliedSettings);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [showSkip, setShowSkip] = useState(false);
+  const [error, setError] = useState(false);
   const finished = useRef(false);
 
   useEffect(() => {
@@ -58,7 +57,9 @@ export default function IntroVideoOverlayV2({
   const shouldPlay = useMemo(() => {
     if (playMode === "always") return true;
     try {
-      return localStorage.getItem("wedding-intro-video-played-v4") !== "1";
+      // Keep compatibility with the previously working intro state while also
+      // recognizing the newer key used by the updated overlay.
+      return localStorage.getItem("wedding-intro-video-played-v3") !== "1" && localStorage.getItem("wedding-intro-video-played-v4") !== "1";
     } catch {
       return true;
     }
@@ -75,15 +76,7 @@ export default function IntroVideoOverlayV2({
       if (settingsReady && !shouldPlay) finish();
       return;
     }
-
-    setLoaded(false);
     setError(!previewSource);
-
-    const timer = window.setTimeout(() => {
-      setError((current) => current || !loaded);
-    }, 15000);
-
-    return () => window.clearTimeout(timer);
   }, [settingsReady, shouldPlay, previewSource]);
 
   useEffect(() => {
@@ -102,6 +95,7 @@ export default function IntroVideoOverlayV2({
 
     if (shouldPlay) {
       try {
+        localStorage.setItem("wedding-intro-video-played-v3", "1");
         localStorage.setItem("wedding-intro-video-played-v4", "1");
       } catch {}
     }
@@ -145,25 +139,36 @@ export default function IntroVideoOverlayV2({
           src={heroImage}
           alt=""
           aria-hidden="true"
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${loaded ? "opacity-0" : "opacity-100"}`}
+          className="absolute inset-0 h-full w-full object-cover opacity-0"
         />
 
-        {previewSource && !error && (
+        {previewSource && !error ? (
           <iframe
             key={previewSource}
             title="Wedding introduction video"
             src={previewSource}
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
-            onLoad={() => {
-              setLoaded(true);
-              setError(false);
-            }}
-            className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"} ${portrait ? "intro-video-mobile-portrait" : ""}`}
+            onError={() => setError(true)}
+            className={`absolute inset-0 z-10 h-full w-full border-0 bg-black ${portrait ? "intro-video-mobile-portrait" : ""}`}
           />
+        ) : (
+          <div className="absolute inset-0 z-10 grid place-items-center bg-black p-6 text-center text-white">
+            <div>
+              <p className="font-display text-2xl">Welcome, Hareesh &amp; Prasanna</p>
+              <p className="mt-2 text-sm text-white/70">The intro video could not be loaded.</p>
+              <button
+                type="button"
+                onClick={finish}
+                className="mt-5 rounded-full border border-white/40 px-5 py-2.5"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/55" />
+        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
       </div>
 
       <div className="absolute right-4 top-4 z-30 flex gap-2">
@@ -191,22 +196,6 @@ export default function IntroVideoOverlayV2({
           </motion.button>
         )}
       </AnimatePresence>
-
-      {error && (
-        <div className="absolute inset-0 z-20 grid place-items-center p-6 text-center text-white">
-          <div>
-            <p className="font-display text-2xl">Welcome, Hareesh &amp; Prasanna</p>
-            <p className="mt-2 text-sm text-white/70">The intro video could not be loaded.</p>
-            <button
-              type="button"
-              onClick={finish}
-              className="mt-5 rounded-full border border-white/40 px-5 py-2.5"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }
