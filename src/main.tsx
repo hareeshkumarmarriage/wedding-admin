@@ -9,6 +9,7 @@ createRoot(document.getElementById("root")!).render(<App />);
 if (window.location.pathname.startsWith("/admin")) {
   void import("./admin-ui-polish.js");
   void import("./admin-advanced.js");
+  void import("./admin-final-hardening.js");
 }
 
 if ("serviceWorker" in navigator) {
