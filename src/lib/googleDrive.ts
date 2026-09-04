@@ -76,12 +76,10 @@ async function fetchDrivePage<T extends DrivePhoto>(
   mimePrefix: "image/" | "video/",
   pageToken?: string,
 ): Promise<DrivePage<T>> {
-  // Production uses the same-origin server proxy so the Drive API key never ships to the browser.
   const serverParams = new URLSearchParams({ event: event || "", type: mimePrefix === "video/" ? "video" : "image", folderId });
   if (pageToken) serverParams.set("pageToken", pageToken);
 
-  let response = await fetch(`/api/drive?${serverParams.toString()}`, { credentials: "same-origin", headers: { Accept: "application/json" } });
-
+  const response = await fetch(`/api/drive?${serverParams.toString()}`, { credentials: "same-origin", headers: { Accept: "application/json" }, cache: "no-store" });
 
   if (!response.ok) {
     let detail = "";
@@ -152,6 +150,7 @@ export async function getDrivePhotosPage(
   folderId = DRIVE_FOLDER_ID,
   pageToken?: string,
 ): Promise<DrivePage<DrivePhoto>> {
+  requireDriveConfig(folderId);
   const cacheKey = `drive-photos:${folderId}:${pageToken || "first"}`;
   const cached = readMediaCache<DrivePage<DrivePhoto>>(cacheKey);
   if (cached) return cached;
@@ -166,6 +165,7 @@ export async function getDriveVideosPage(
   folderId = DRIVE_FOLDER_ID,
   pageToken?: string,
 ): Promise<DrivePage<DriveVideo>> {
+  requireDriveConfig(folderId);
   const cacheKey = `drive-videos:${folderId}:${pageToken || "first"}`;
   const cached = readMediaCache<DrivePage<DriveVideo>>(cacheKey);
   if (cached) return cached;
@@ -175,15 +175,14 @@ export async function getDriveVideosPage(
   return page;
 }
 
-// Compatibility helpers for callers that need a single page.
+export type DriveVideo = DrivePhoto;
+
 export async function getDrivePhotos(
   event?: string,
   folderId = DRIVE_FOLDER_ID,
 ): Promise<DrivePhoto[]> {
   return (await getDrivePhotosPage(event, folderId)).items;
 }
-
-export type DriveVideo = DrivePhoto;
 
 export async function getDriveVideos(
   event?: string,
@@ -205,7 +204,6 @@ export function getDriveVideoPreviewUrl(file: DriveVideo): string {
 
 function resizeThumbnailUrl(thumbnailLink: string, size: number): string {
   const safeSize = Math.max(120, Math.min(size, MAX_THUMBNAIL_SIZE));
-  // Drive thumbnail URLs normally end in =sNNN. Preserve any other options.
   if (/=s\d+(?:-[^&]*)?$/.test(thumbnailLink)) {
     return thumbnailLink.replace(/=s\d+(?:-[^&]*)?$/, `=s${safeSize}`);
   }
@@ -245,9 +243,6 @@ export function getDriveCoverImageUrl(
 ): string {
   const id = String(fileId || "").trim();
   if (!id) return "";
-  // Use the same-origin media proxy first so Drive redirects/CSP do not break
-  // event cover images. The optional cache key lets the public event card
-  // immediately pick up a changed cover without waiting for CDN/browser cache.
   const params = new URLSearchParams({
     id,
     size: String(Math.max(400, Math.min(size, 2000))),
@@ -275,8 +270,8 @@ export function getDriveViewUrl(file: DrivePhoto): string {
 }
 
 export function getDriveVideoDownloadUrl(file: DriveVideo): string {
-  if (!API_KEY || !file.id) return "";
-  const params = new URLSearchParams({ alt: "media", key: API_KEY });
+  if (!file.id) return "";
+  const params = new URLSearchParams({ id: file.id });
   if (file.resourceKey) params.set("resourceKey", file.resourceKey);
-  return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?${params.toString()}`;
+  return `/api/media?${params.toString()}`;
 }
