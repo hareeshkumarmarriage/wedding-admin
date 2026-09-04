@@ -19,7 +19,12 @@
     .admin-polish-toast{position:fixed;right:18px;bottom:18px;z-index:1100;width:min(380px,calc(100% - 36px));border-radius:16px;background:#fff;border:1px solid #e7ded9;box-shadow:0 15px 45px rgba(30,15,10,.15);padding:14px 16px;font-size:13px}
     .admin-polish-modal-card{width:min(1100px,100%);height:min(820px,92vh);display:flex;flex-direction:column}.admin-polish-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #eee}.admin-polish-modal-head button{border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer}.admin-polish-tools{display:flex;flex-wrap:wrap;gap:8px}.admin-polish-preview{flex:1;display:grid;place-items:center;overflow:auto;background:#f5f1ef;padding:20px}.admin-polish-device{width:100%;height:100%;max-width:1280px;border:1px solid #ddd;border-radius:18px;overflow:hidden;background:#fff}.admin-polish-device.mobile{width:390px}.admin-polish-device.tablet{width:820px}.admin-polish-device iframe{width:100%;height:100%;border:0}
     .admin-polish-health{display:grid;gap:8px;margin-top:14px}.admin-polish-health-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #eee;border-radius:14px;padding:10px 12px;font-size:12px}.admin-polish-ok{color:#16803c}.admin-polish-warn{color:#a66b00}
-    @media(max-width:767px){.admin-polish-savebar{bottom:10px}.admin-polish-toast{left:18px;right:18px;bottom:76px;width:auto}body.admin-polished main{padding-bottom:92px!important}}
+    @media(max-width:767px){
+      body.admin-polished aside { height:100dvh !important; max-height:100dvh !important; overflow-y:auto !important; overflow-x:hidden !important; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; }
+      body.admin-polished aside nav { padding-bottom:24px; }
+      body.admin-polished aside nav button { flex-shrink:0; }
+      .admin-polish-savebar{bottom:10px}.admin-polish-toast{left:18px;right:18px;bottom:76px;width:auto}body.admin-polished main{padding-bottom:92px!important}
+    }
   `;
   const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c]));
   const buttons = text => [...document.querySelectorAll('button')].filter(b => (b.textContent || '').trim().toLowerCase().includes(text.toLowerCase()));
