@@ -56,7 +56,6 @@ export default function IntroVideoOverlayV2({
 
   const videoId = String(settings?.introVideoDriveId || "").trim();
   const autoplay = settings?.introAutoplay !== false;
-  const hasConfiguredVideo = Boolean(videoId);
   const configuredMuted = settings?.introMuted !== false;
   const skipEnabled = settings?.introSkip !== false;
   const portrait = settings?.introMobilePortrait === true;
