@@ -21,10 +21,7 @@ jobs:
           s = p.read_text()
           s = s.replace('const DEFAULT_INTRO_VIDEO_FILE_ID = "1ANoJPcBbypy3IRRVx8WMxGo5uEXMd6nW";\n\n', '')
           s = s.replace('const videoId = String(settings?.introVideoDriveId || "").trim() || DEFAULT_INTRO_VIDEO_FILE_ID;', 'const videoId = String(settings?.introVideoDriveId || "").trim();')
-          s = s.replace('    return `/api/media?id=${encodeURIComponent(videoId)}`;', '    return `/api/media?id=${encodeURIComponent(videoId)}`;')
-          s = s.replace('  const autoplay = settings?.introAutoplay !== false;', '  const autoplay = settings?.introAutoplay !== false;\n  const hasConfiguredVideo = Boolean(videoId);')
-          s = s.replace('    setError(!videoSource);', '    setError(!videoSource);')
-          s = s.replace('      {error && (', '      {error && (')
+          s = s.replace('  const autoplay = settings?.introAutoplay !== false;\n  const hasConfiguredVideo = Boolean(videoId);', '  const autoplay = settings?.introAutoplay !== false;')
           p.write_text(s)
           PY
       - name: Commit patch
