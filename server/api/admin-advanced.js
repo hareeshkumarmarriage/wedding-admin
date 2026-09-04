@@ -1,11 +1,12 @@
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-function json(res,status,body){res.status(status).setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(body));}
+function json(res,status,body){res.status(status).setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.end(JSON.stringify(body));}
 function authHeaders(token=SERVICE){return {apikey:SERVICE,Authorization:`Bearer ${token}`, 'Content-Type':'application/json'};}
 async function supa(path,opts={}){const r=await fetch(`${SUPABASE_URL}${path}`,{...opts,headers:{...authHeaders(),...(opts.headers||{})}});const text=await r.text();let data={};try{data=text?JSON.parse(text):{};}catch{data=text;}if(!r.ok)throw new Error(data?.message||data?.msg||data?.error||text||`Supabase ${r.status}`);return data;}
 async function userForToken(token){if(!SUPABASE_URL||!SERVICE||!token)return null;const r=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:authHeaders(token)});return r.ok?r.json():null;}
 async function adminForToken(token){const u=await userForToken(token);if(!u?.id)return null;const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(u.id)}&select=id,role,username,display_name&limit=1`);return rows[0]?.role==='admin'?{...u,profile:rows[0]}:null;}
+function revisionId(value){const id=String(value||'').trim();return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)?id:null;}
 async function snapshot(){
   const [settings,sections,events]=await Promise.all([
     supa('/rest/v1/site_settings?select=key,value,updated_at&order=key.asc'),
@@ -23,11 +24,15 @@ async function createRevision(admin,label,status='draft'){
   return revision;
 }
 async function applySnapshot(snapshotData){
+  if(!snapshotData || snapshotData.schema !== 1) throw new Error('Unsupported revision snapshot.');
   const settings=snapshotData?.site_settings||[];
-  for(const row of settings){await supa(`/rest/v1/site_settings?key=eq.${encodeURIComponent(row.key)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:row.key,value:row.value,updated_at:new Date().toISOString()})});}
-  for(const row of snapshotData?.homepage_sections||[]){await supa(`/rest/v1/homepage_sections?key=eq.${encodeURIComponent(row.key)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({label:row.label,enabled:row.enabled,sort_order:row.sort_order,updated_at:new Date().toISOString()})});}
-  for(const row of snapshotData?.events||[]){
-    if(!row.id)continue;
+  const sections=snapshotData?.homepage_sections||[];
+  const events=snapshotData?.events||[];
+  if(!Array.isArray(settings)||!Array.isArray(sections)||!Array.isArray(events)) throw new Error('Invalid revision snapshot.');
+  for(const row of settings){if(!row?.key)continue;await supa(`/rest/v1/site_settings?key=eq.${encodeURIComponent(row.key)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:row.key,value:row.value,updated_at:new Date().toISOString()})});}
+  for(const row of sections){if(!row?.key)continue;await supa(`/rest/v1/homepage_sections?key=eq.${encodeURIComponent(row.key)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({label:row.label,enabled:row.enabled,sort_order:row.sort_order,updated_at:new Date().toISOString()})});}
+  for(const row of events){
+    if(!row?.id)continue;
     const {id,created_at,...patch}=row;
     await supa(`/rest/v1/events?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({...patch,updated_at:new Date().toISOString()})});
   }
@@ -35,10 +40,16 @@ async function applySnapshot(snapshotData){
 
 export default async function handler(req,res){
   try{
-    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'').trim();
     const admin=await adminForToken(token);
     if(!admin)return json(res,401,{ok:false,error:'Admin authorization required.'});
     const action=String(req.query?.action||(req.body||{}).action||'status');
+    const readActions=new Set(['snapshot','versions','version','activity','health','prelaunch','status']);
+    const writeActions=new Set(['draft','publish','rollback']);
+    if((writeActions.has(action)&&req.method!=='POST')||(readActions.has(action)&&req.method!=='GET')){
+      res.setHeader('Allow',writeActions.has(action)?'POST':'GET');
+      return json(res,405,{ok:false,error:'Method not allowed.'});
+    }
 
     if(action==='snapshot')return json(res,200,{ok:true,snapshot:await snapshot()});
     if(action==='draft')return json(res,200,{ok:true,revision:await createRevision(admin,(req.body||{}).label||'Draft')});
@@ -47,13 +58,13 @@ export default async function handler(req,res){
       return json(res,200,{ok:true,versions:rows});
     }
     if(action==='version'){
-      const id=String(req.query?.id||'');if(!id)return json(res,400,{ok:false,error:'Revision ID is required.'});
+      const id=revisionId(req.query?.id);if(!id)return json(res,400,{ok:false,error:'Valid revision ID is required.'});
       const rows=await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(id)}&select=id,version_no,status,label,snapshot,created_by,created_at,published_at&limit=1`);
       if(!rows[0])return json(res,404,{ok:false,error:'Revision not found.'});
       return json(res,200,{ok:true,revision:rows[0]});
     }
     if(action==='publish'||action==='rollback'){
-      const id=String((req.body||{}).id||req.query?.id||'');if(!id)return json(res,400,{ok:false,error:'Revision ID is required.'});
+      const id=revisionId((req.body||{}).id||req.query?.id);if(!id)return json(res,400,{ok:false,error:'Valid revision ID is required.'});
       const rows=await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(id)}&select=id,version_no,status,label,snapshot&limit=1`);const revision=rows[0];
       if(!revision)return json(res,404,{ok:false,error:'Revision not found.'});
       await applySnapshot(revision.snapshot);
@@ -80,6 +91,7 @@ export default async function handler(req,res){
         {name:'Revision storage',ok:true},
       ];return json(res,200,{ok:true,checks,passed:checks.filter(x=>x.ok).length,total:checks.length});
     }
+    if(action==='status')return json(res,200,{ok:true,status:'ready'});
     return json(res,400,{ok:false,error:'Unknown admin advanced action.'});
-  }catch(e){console.error('[admin-advanced]',e);return json(res,500,{ok:false,error:e.message||'Admin advanced operation failed.'});}
+  }catch(e){console.error('[admin-advanced]',e);return json(res,500,{ok:false,error:'Admin advanced operation failed.'});}
 }
