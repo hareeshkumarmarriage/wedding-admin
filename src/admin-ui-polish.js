@@ -1,35 +1,68 @@
 (() => {
   const state = { unsaved: false };
   const css = `
-    body.admin-polished aside { box-shadow: 8px 0 30px rgba(80,45,35,.04); backdrop-filter: blur(12px); }
-    body.admin-polished aside nav button { min-height: 42px; transition: transform .16s ease, background .16s ease; }
-    body.admin-polished aside nav button:hover { transform: translateX(2px); }
-    body.admin-polished main { scroll-behavior: smooth; }
-    .admin-polish-group { margin: 18px 10px 6px; font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #8b7770; }
+    :root { --admin-bg:#f7f4f2; --admin-card:#fff; --admin-border:#e8e1dd; --admin-text:#2b211e; --admin-muted:#7d6f69; --admin-accent:var(--primary,#8f5b4a); }
+    body.admin-polished { background:var(--admin-bg); color:var(--admin-text); }
+    body.admin-polished aside { box-shadow:8px 0 30px rgba(80,45,35,.06); border-right:1px solid var(--admin-border); backdrop-filter:blur(16px); z-index:40; }
+    body.admin-polished aside nav { scrollbar-width:thin; scrollbar-color:#d8cbc5 transparent; }
+    body.admin-polished aside nav button { min-height:44px; margin:2px 8px; border-radius:12px; transition:transform .16s ease,background .16s ease,box-shadow .16s ease; }
+    body.admin-polished aside nav button:hover { transform:translateX(2px); }
+    body.admin-polished aside nav button[aria-current="page"],body.admin-polished aside nav button.bg-primary { box-shadow:0 5px 16px rgba(80,45,35,.10); }
+    body.admin-polished main { scroll-behavior:smooth; }
+    body.admin-polished main > * { max-width:1440px; }
+    body.admin-polished input,body.admin-polished textarea,body.admin-polished select { min-height:42px; border-color:var(--admin-border); border-radius:11px; transition:border-color .15s,box-shadow .15s,background .15s; }
+    body.admin-polished input:focus,body.admin-polished textarea:focus,body.admin-polished select:focus { border-color:var(--admin-accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--admin-accent) 13%,transparent); outline:none; }
+    body.admin-polished button { transition:transform .15s ease,box-shadow .15s ease,background .15s ease; }
+    body.admin-polished button:active { transform:scale(.98); }
+    body.admin-polished main .rounded-xl,body.admin-polished main .rounded-2xl,body.admin-polished main .rounded-lg { border-color:var(--admin-border); }
+    body.admin-polished main .shadow,body.admin-polished main .shadow-sm { box-shadow:0 8px 26px rgba(45,30,25,.055); }
+    .admin-polish-group { margin:18px 14px 7px; font-size:9px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:#98857d; }
     .admin-polish-command,.admin-polish-modal { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:18px; background:rgba(20,12,10,.48); backdrop-filter:blur(8px); }
     .admin-polish-command[hidden],.admin-polish-modal[hidden],.admin-polish-toast[hidden],.admin-polish-savebar[hidden]{display:none!important}
-    .admin-polish-command-card,.admin-polish-modal-card{width:min(900px,100%);max-height:92vh;overflow:hidden;border:1px solid #e7ded9;border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(20,10,5,.25)}
-    .admin-polish-command input{width:100%;height:58px;border:0;border-bottom:1px solid #eee;outline:0;padding:0 20px;font-size:16px}
-    .admin-polish-command-list{max-height:55vh;overflow:auto;padding:8px}
+    .admin-polish-command-card,.admin-polish-modal-card{width:min(900px,100%);max-height:92dvh;overflow:hidden;border:1px solid var(--admin-border);border-radius:24px;background:#fff;box-shadow:0 30px 90px rgba(20,10,5,.25)}
+    .admin-polish-command input{width:100%;height:58px;border:0;border-bottom:1px solid #eee;outline:0;padding:0 20px;font-size:16px;border-radius:0}
+    .admin-polish-command-list{max-height:55dvh;overflow:auto;padding:8px}
     .admin-polish-command-item{display:flex;justify-content:space-between;width:100%;border:0;border-radius:14px;background:transparent;padding:12px 14px;text-align:left;cursor:pointer;font-size:14px}
     .admin-polish-command-item:hover{background:#f8f1ed}
     .admin-polish-kbd{border:1px solid #ddd;border-radius:7px;padding:2px 6px;font-size:10px;color:#777}
-    .admin-polish-savebar{position:fixed;left:50%;bottom:16px;z-index:700;transform:translateX(-50%);display:flex;align-items:center;gap:12px;width:min(760px,calc(100% - 24px));border:1px solid #e7ded9;border-radius:18px;background:rgba(255,255,255,.95);box-shadow:0 18px 50px rgba(50,25,15,.16);padding:10px 12px 10px 16px}
-    .admin-polish-savebar .status{flex:1;font-size:12px}.admin-polish-savebar button{min-height:38px;border-radius:999px;border:1px solid #ddd;padding:0 14px;cursor:pointer}.admin-polish-savebar .primary{border-color:transparent;background:var(--primary,#8f5b4a);color:#fff}
-    .admin-polish-toast{position:fixed;right:18px;bottom:18px;z-index:1100;width:min(380px,calc(100% - 36px));border-radius:16px;background:#fff;border:1px solid #e7ded9;box-shadow:0 15px 45px rgba(30,15,10,.15);padding:14px 16px;font-size:13px}
-    .admin-polish-modal-card{width:min(1100px,100%);height:min(820px,92vh);display:flex;flex-direction:column}.admin-polish-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #eee}.admin-polish-modal-head button{border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer}.admin-polish-tools{display:flex;flex-wrap:wrap;gap:8px}.admin-polish-preview{flex:1;display:grid;place-items:center;overflow:auto;background:#f5f1ef;padding:20px}.admin-polish-device{width:100%;height:100%;max-width:1280px;border:1px solid #ddd;border-radius:18px;overflow:hidden;background:#fff}.admin-polish-device.mobile{width:390px}.admin-polish-device.tablet{width:820px}.admin-polish-device iframe{width:100%;height:100%;border:0}
+    .admin-polish-savebar{position:fixed;left:50%;bottom:16px;z-index:700;transform:translateX(-50%);display:flex;align-items:center;gap:12px;width:min(760px,calc(100% - 24px));border:1px solid var(--admin-border);border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 18px 50px rgba(50,25,15,.16);padding:10px 12px 10px 16px;backdrop-filter:blur(14px)}
+    .admin-polish-savebar .status{flex:1;font-size:12px}.admin-polish-savebar button{min-height:38px;border-radius:999px;border:1px solid #ddd;padding:0 14px;cursor:pointer}.admin-polish-savebar .primary{border-color:transparent;background:var(--admin-accent);color:#fff}
+    .admin-polish-toast{position:fixed;right:18px;bottom:18px;z-index:1100;width:min(380px,calc(100% - 36px));border-radius:16px;background:#fff;border:1px solid var(--admin-border);box-shadow:0 15px 45px rgba(30,15,10,.15);padding:14px 16px;font-size:13px}
+    .admin-polish-modal-card{width:min(1100px,100%);height:min(820px,92dvh);display:flex;flex-direction:column}.admin-polish-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #eee}.admin-polish-modal-head button{border:1px solid #ddd;background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer}.admin-polish-tools{display:flex;flex-wrap:wrap;gap:8px}.admin-polish-preview{flex:1;display:grid;place-items:center;overflow:auto;background:#f5f1ef;padding:20px}.admin-polish-device{width:100%;height:100%;max-width:1280px;border:1px solid #ddd;border-radius:18px;overflow:hidden;background:#fff}.admin-polish-device.mobile{width:390px}.admin-polish-device.tablet{width:820px}.admin-polish-device iframe{width:100%;height:100%;border:0}
     .admin-polish-health{display:grid;gap:8px;margin-top:14px}.admin-polish-health-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #eee;border-radius:14px;padding:10px 12px;font-size:12px}.admin-polish-ok{color:#16803c}.admin-polish-warn{color:#a66b00}
-    @media(max-width:767px){
-      body.admin-polished aside { height:100dvh !important; max-height:100dvh !important; overflow-y:auto !important; overflow-x:hidden !important; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; }
-      body.admin-polished aside nav { padding-bottom:24px; }
-      body.admin-polished aside nav button { flex-shrink:0; }
-      .admin-polish-savebar{bottom:10px}.admin-polish-toast{left:18px;right:18px;bottom:76px;width:auto}body.admin-polished main{padding-bottom:92px!important}
+    @media(max-width:1023px){
+      body.admin-polished main { min-width:0; }
+      body.admin-polished main > * { max-width:100%; }
     }
+    @media(max-width:767px){
+      body.admin-polished { overflow-x:hidden; }
+      body.admin-polished aside { height:100dvh !important; max-height:100dvh !important; overflow-y:auto !important; overflow-x:hidden !important; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-y; scrollbar-width:thin; }
+      body.admin-polished aside nav { padding:6px 4px 28px; }
+      body.admin-polished aside nav button { flex-shrink:0; min-height:46px; }
+      body.admin-polished main { padding-bottom:96px!important; }
+      body.admin-polished main > div { max-width:100%; }
+      body.admin-polished main h1 { font-size:1.35rem; line-height:1.2; }
+      body.admin-polished main h2 { font-size:1.1rem; }
+      body.admin-polished main .grid { min-width:0; }
+      body.admin-polished main table { display:block; overflow-x:auto; white-space:nowrap; max-width:100%; }
+      .admin-polish-group { margin-top:15px; }
+      .admin-polish-savebar { bottom:8px; gap:7px; padding:8px 9px 8px 12px; border-radius:16px; }
+      .admin-polish-savebar .status div { display:none; }
+      .admin-polish-savebar button { min-height:40px; padding:0 12px; }
+      .admin-polish-toast { left:12px; right:12px; bottom:72px; width:auto; }
+      .admin-polish-modal { padding:8px; }
+      .admin-polish-modal-card { border-radius:18px; max-height:96dvh; }
+      .admin-polish-modal-head { padding:12px; }
+      .admin-polish-tools button { min-height:38px; }
+      .admin-polish-preview { padding:8px; }
+      .admin-polish-device.mobile { width:min(390px,100%); }
+    }
+    @media(prefers-reduced-motion:reduce){ body.admin-polished *,body.admin-polished *::before,body.admin-polished *::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
   `;
   const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c]));
   const buttons = text => [...document.querySelectorAll('button')].filter(b => (b.textContent || '').trim().toLowerCase().includes(text.toLowerCase()));
   function toast(message, kind='success') { let el=document.querySelector('.admin-polish-toast'); if(!el){el=document.createElement('div');el.className='admin-polish-toast';document.body.appendChild(el)} el.innerHTML=`<strong>${kind==='error'?'⚠':'✓'}</strong> ${escapeHtml(message)}`;el.hidden=false;clearTimeout(el._timer);el._timer=setTimeout(()=>el.hidden=true,3200); }
-  function addGroups(){ const groups={Content:'WEBSITE',Events:'WEBSITE',Gallery:'WEBSITE',Guestbook:'WEBSITE',Guests:'PEOPLE',RSVP:'PEOPLE',Analytics:'INSIGHTS',Notifications:'INSIGHTS',Exports:'INSIGHTS','Admin Profiles':'ADMINISTRATION',Security:'ADMINISTRATION','Audit Log':'ADMINISTRATION'};let last='';[...document.querySelectorAll('aside nav button')].forEach(btn=>{if(btn.dataset.polishGroup)return;btn.dataset.polishGroup='1';const label=(btn.textContent||'').replace(/\d+$/,'').trim();const group=groups[label];if(group&&group!==last){const h=document.createElement('div');h.className='admin-polish-group';h.textContent=group;btn.parentElement?.insertBefore(h,btn);last=group}btn.addEventListener('click',()=>{storage('admin-polish-last-tab',label)})}) }
+  function addGroups(){ const groups={Content:'WEBSITE',Events:'WEBSITE',Gallery:'WEBSITE',Guestbook:'WEBSITE',Guests:'PEOPLE',RSVP:'PEOPLE',Analytics:'INSIGHTS',Notifications:'INSIGHTS',Exports:'INSIGHTS','Admin Profiles':'ADMINISTRATION',Security:'ADMINISTRATION','Audit Log':'ADMINISTRATION'};let last='';[...document.querySelectorAll('aside nav button')].forEach(btn=>{if(btn.dataset.polishGroup)return;btn.dataset.polishGroup='1';const label=(btn.textContent||'').replace(/\d+$/,'').trim();const group=groups[label];if(group&&group!==last){const h=document.createElement('div');h.className='admin-polish-group';h.textContent=group;btn.parentElement?.insertBefore(h,btn);last=group}btn.addEventListener('click',()=>storage('admin-polish-last-tab',label))}) }
   function storage(key,value){try{if(arguments.length===1)return localStorage.getItem(key);localStorage.setItem(key,value)}catch{}}
   function openCommand(){let o=document.querySelector('.admin-polish-command');if(!o){o=document.createElement('div');o.className='admin-polish-command';o.innerHTML=`<div class="admin-polish-command-card"><input aria-label="Search Admin" placeholder="Search pages, actions and tools..."><div class="admin-polish-command-list"></div></div>`;document.body.appendChild(o);o.addEventListener('click',e=>{if(e.target===o)o.hidden=true});o.querySelector('input').addEventListener('input',renderCommands)}o.hidden=false;const input=o.querySelector('input');input.value='';renderCommands();setTimeout(()=>input.focus(),20)}
   function renderCommands(){const o=document.querySelector('.admin-polish-command');if(!o)return;const q=o.querySelector('input').value.toLowerCase();const list=o.querySelector('.admin-polish-command-list');const nav=[...document.querySelectorAll('aside nav button')].map(b=>({name:(b.textContent||'').trim(),run:()=>b.click()}));const cmds=[...nav,{name:'Preview Website',run:()=>openPreview(location.origin)},{name:'Pre-Launch Check',run:openLaunchCheck},{name:'System Health',run:openHealth},{name:'Link Checker',run:runLinkCheck},{name:'Media Health',run:runMediaCheck},{name:'Save Changes',run:()=>document.querySelector('.admin-polish-savebar [data-action="save"]')?.click()}].filter(x=>x.name.toLowerCase().includes(q)).slice(0,20);list.innerHTML=cmds.length?cmds.map((c,i)=>`<button class="admin-polish-command-item" data-i="${i}"><span>${escapeHtml(c.name)}</span>${i===0?'<span class="admin-polish-kbd">Enter</span>':''}</button>`).join(''):'<div style="padding:20px;text-align:center;color:#777">No matching Admin actions.</div>';list.querySelectorAll('button').forEach((b,i)=>b.onclick=()=>{o.hidden=true;cmds[i].run()})}
