@@ -16,7 +16,7 @@ import RsvpSection from "@/components/wedding/RsvpSection";
 import ShareWedding from "@/components/wedding/ShareWedding";
 
 type SiteControl = { mode?: "all" | "landing" | "disabled"; pages?: Record<string, boolean>; maintenance?: { enabled?: boolean; title?: string; description?: string } };
-type WeddingSettings = { introEnabled?: boolean; groomName?: string; brideName?: string; introVideoDriveId?: string; introAutoplay?: boolean; introMobilePortrait?: boolean; introVideoPlayMode?: "once" | "always"; [key: string]: unknown };
+type WeddingSettings = { introEnabled?: boolean; groomName?: string; brideName?: string; introVideoDriveId?: string; introAutoplay?: boolean; introMuted?: boolean; introSkip?: boolean; introMobilePortrait?: boolean; introVideoPlayMode?: "once" | "always"; [key: string]: unknown };
 type ThemeSettings = { darkMode?: boolean; primary?: string; headingFont?: string; bodyFont?: string };
 
 const Index = () => {
@@ -59,9 +59,14 @@ const Index = () => {
     const readyKey = "wedding-loading-screen-ready-path-v1";
     const currentPath = window.location.pathname;
     const introShownKey = `wedding-intro-overlay-shown-v1:${currentPath}`;
+    const playEveryVisit = wedding.introVideoPlayMode === "always";
     const show = () => {
       if (!active) return;
-      try { if (sessionStorage.getItem(introShownKey) === "1") return; sessionStorage.setItem(introShownKey, "1"); } catch {}
+      // The play-mode setting is authoritative. Only suppress the overlay with
+      // sessionStorage when Admin selected Play once.
+      if (!playEveryVisit) {
+        try { if (sessionStorage.getItem(introShownKey) === "1") return; sessionStorage.setItem(introShownKey, "1"); } catch {}
+      }
       setShowIntro(true);
     };
     let ready = false;
@@ -69,7 +74,7 @@ const Index = () => {
     if (ready) { show(); return () => { active = false; }; }
     window.addEventListener("wedding-loading-finished", show);
     return () => { active = false; window.removeEventListener("wedding-loading-finished", show); };
-  }, [settingsReady, wedding.introEnabled]);
+  }, [settingsReady, wedding.introEnabled, wedding.introVideoPlayMode]);
 
   useEffect(() => {
     if (showIntro) return;
