@@ -3,14 +3,18 @@ const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 function json(res, status, body) { res.status(status).setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); }
 function headers(token) { return { apikey: SERVICE, Authorization: `Bearer ${token || SERVICE}`, 'Content-Type':'application/json' }; }
-async function adminCheck(token) {
-  if (!SUPABASE_URL || !SERVICE || !token) return false;
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/is_admin`, { method:'POST', headers: headers(token), body:'{}' });
-  return r.ok && await r.json();
-}
 async function authenticatedUser(token) {
+  if (!SUPABASE_URL || !SERVICE || !token) return null;
   const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: headers(token) });
   return r.ok ? r.json() : null;
+}
+async function adminCheck(token) {
+  const user = await authenticatedUser(token);
+  if (!user?.id) return false;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=role&limit=1`, { headers: headers() });
+  if (!r.ok) return false;
+  const rows = await r.json();
+  return rows[0]?.role === 'admin';
 }
 function userInfo(req) {
   const ua = String(req.headers['user-agent'] || 'Unknown');
