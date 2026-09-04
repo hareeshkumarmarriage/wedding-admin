@@ -4,8 +4,6 @@ import { Maximize, Minimize, Play, Volume2, VolumeX } from "lucide-react";
 import heroImage from "@/assets/hero-couple.jpg";
 import { getSiteSettings } from "@/lib/supabaseData";
 
-const DEFAULT_INTRO_VIDEO_FILE_ID = "1ANoJPcBbypy3IRRVx8WMxGo5uEXMd6nW";
-
 type WeddingSettings = {
   introEnabled?: boolean;
   introVideoDriveId?: string;
@@ -56,8 +54,9 @@ export default function IntroVideoOverlayV2({
     };
   }, [suppliedSettings]);
 
-  const videoId = String(settings?.introVideoDriveId || "").trim() || DEFAULT_INTRO_VIDEO_FILE_ID;
+  const videoId = String(settings?.introVideoDriveId || "").trim();
   const autoplay = settings?.introAutoplay !== false;
+  const hasConfiguredVideo = Boolean(videoId);
   const configuredMuted = settings?.introMuted !== false;
   const skipEnabled = settings?.introSkip !== false;
   const portrait = settings?.introMobilePortrait === true;
