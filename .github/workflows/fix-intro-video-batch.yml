@@ -1,0 +1,40 @@
+name: Apply remaining intro video hardening
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[auto-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch intro behavior
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/components/wedding/IntroVideoOverlayV2.tsx')
+          s = p.read_text()
+          s = s.replace('const DEFAULT_INTRO_VIDEO_FILE_ID = "1ANoJPcBbypy3IRRVx8WMxGo5uEXMd6nW";\n\n', '')
+          s = s.replace('const videoId = String(settings?.introVideoDriveId || "").trim() || DEFAULT_INTRO_VIDEO_FILE_ID;', 'const videoId = String(settings?.introVideoDriveId || "").trim();')
+          s = s.replace('    return `/api/media?id=${encodeURIComponent(videoId)}`;', '    return `/api/media?id=${encodeURIComponent(videoId)}`;')
+          s = s.replace('  const autoplay = settings?.introAutoplay !== false;', '  const autoplay = settings?.introAutoplay !== false;\n  const hasConfiguredVideo = Boolean(videoId);')
+          s = s.replace('    setError(!videoSource);', '    setError(!videoSource);')
+          s = s.replace('      {error && (', '      {error && (')
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/wedding/IntroVideoOverlayV2.tsx
+          if git diff --cached --quiet; then
+            echo "No intro fixes needed"
+          else
+            git commit -m "fix: require configured intro video id [auto-fix]"
+            git push
+          fi
