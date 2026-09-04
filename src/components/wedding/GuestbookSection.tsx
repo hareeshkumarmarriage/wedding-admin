@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Heart, Send, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { addGuestbookMessage, getGuestbookMessages, type GuestbookMessage as LocalMessage } from "@/lib/weddingStorage";
-import { getApprovedGuestbook, getSiteSettings, isSupabaseConfigured, submitGuestbook } from "@/lib/supabaseData";
+import { getSiteSettings, isSupabaseConfigured, submitGuestbook } from "@/lib/supabaseData";
 
 type WeddingSettings = {
   featuredGuestbookCount?: number;
@@ -25,7 +25,12 @@ const GuestbookSection = () => {
 
   useEffect(() => {
     if (isSupabaseConfigured) {
-      getApprovedGuestbook(30).then((items) => setMessages(items.map((item) => ({ id: item.id, name: item.name, message: item.message, createdAt: item.created_at })))).catch(() => {});
+      fetch("/api/guestbook?limit=30", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Unable to load guestbook.");
+          return response.json();
+        })
+        .then((items) => setMessages(items.map((item: any) => ({ id: item.id, name: item.name, message: item.message, createdAt: item.created_at }))));
     }
     getSiteSettings().then((settings) => {
       const wedding = settings.wedding as WeddingSettings | undefined;
