@@ -38,7 +38,7 @@ export default async function handler(req,res){
       await supa('/rest/v1/profiles',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({id:u.id,username:username||email.split('@')[0],display_name:display_name||'',role:role==='admin'?'admin':'guest',updated_at:new Date().toISOString()})});
       return json(res,200,{ok:true,id:u.id});
     }
-    const id=String((req.body||{}).id||'');
+    const id=String((req.body||{}).id || req.query?.id || '');
     if(action==='update'){
       if(!id) return json(res,400,{ok:false,error:'User ID is required.'});
       const {email,password,username,display_name,role}=req.body||{};
@@ -102,6 +102,11 @@ export default async function handler(req,res){
     }
     if(action==='force_logout'){
       if(!id) return json(res,400,{ok:false,error:'Session ID required.'});
+      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(id)}&select=user_id`);
+      const uid=rows[0]?.user_id;
+      if(uid){
+        await supa(`/auth/v1/admin/users/${encodeURIComponent(uid)}`,{method:'PUT',body:JSON.stringify({user_metadata:{force_logout_at:new Date().toISOString()}})});
+      }
       await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({revoked_at:new Date().toISOString()})});
       return json(res,200,{ok:true});
     }
