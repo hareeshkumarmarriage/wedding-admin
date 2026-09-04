@@ -8,6 +8,10 @@ async function adminCheck(token) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/is_admin`, { method:'POST', headers: headers(token), body:'{}' });
   return r.ok && await r.json();
 }
+async function authenticatedUser(token) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: headers(token) });
+  return r.ok ? r.json() : null;
+}
 function userInfo(req) {
   const ua = String(req.headers['user-agent'] || 'Unknown');
   const device = /android/i.test(ua) ? 'Android' : /iphone|ipad|ipod/i.test(ua) ? 'iOS' : /windows/i.test(ua) ? 'Windows' : /mac/i.test(ua) ? 'macOS' : /linux/i.test(ua) ? 'Linux' : 'Other';
@@ -37,7 +41,7 @@ export default async function handler(req,res){
     const id=String((req.body||{}).id||''); if(!id) return json(res,400,{ok:false,error:'User ID is required.'});
     if(action==='update'){
       const {email,password,username,display_name,role}=req.body||{};
-      const currentUser=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:headers(token)}).then(r=>r.ok?r.json():null);
+      const currentUser=await authenticatedUser(token);
       if(!currentUser?.id)return json(res,401,{ok:false,error:'Invalid admin session.'});
       const requestedRole=role==='admin'?'admin':'guest';
       if(password && String(password).length<8)return json(res,400,{ok:false,error:'Password must be at least 8 characters.'});
@@ -52,7 +56,7 @@ export default async function handler(req,res){
       return json(res,200,{ok:true});
     }
     if(action==='delete'){
-      const currentUser=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:headers(token)}).then(r=>r.ok?r.json():null);
+      const currentUser=await authenticatedUser(token);
       if(currentUser?.id===id)return json(res,400,{ok:false,error:'You cannot delete your own active admin account.'});
       const profiles=await supa('/rest/v1/profiles?select=id,role');
       const adminCount=(profiles||[]).filter(p=>p.role==='admin').length;
@@ -63,7 +67,7 @@ export default async function handler(req,res){
     }
     if(action==='session'){
       const info=userInfo(req);
-      const authUser=await fetch(`${SUPABASE_URL}/auth/v1/user`,{headers:headers(token)}).then(r=>r.ok?r.json():null);
+      const authUser=await authenticatedUser(token);
       if(!authUser?.id) return json(res,401,{ok:false,error:'Invalid session.'});
       const profiles=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=username,role`);
       const p=profiles[0]||{};
@@ -73,12 +77,25 @@ export default async function handler(req,res){
     if(action==='list_sessions'){
       return json(res,200,{ok:true,sessions:await supa('/rest/v1/admin_sessions?select=*&revoked_at=is.null&order=last_seen_at.desc&limit=100')});
     }
-    if(action==='heartbeat'){const checkId=String(req.query?.id || (req.body||{}).id || '');if(!checkId)return json(res,400,{ok:false,error:'Session ID required.'});const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&select=id,user_id,revoked_at&limit=1`);if(!rows[0])return json(res,404,{ok:false,error:'Session not found.'});if(rows[0].revoked_at)return json(res,200,{ok:true,revoked:true});await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({last_seen_at:new Date().toISOString()})});return json(res,200,{ok:true,revoked:false});}
+    if(action==='heartbeat'){
+      const checkId=String(req.query?.id || (req.body||{}).id || '');
+      if(!checkId)return json(res,400,{ok:false,error:'Session ID required.'});
+      const authUser=await authenticatedUser(token);
+      if(!authUser?.id)return json(res,401,{ok:false,error:'Invalid admin session.'});
+      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&user_id=eq.${encodeURIComponent(authUser.id)}&select=id,user_id,revoked_at&limit=1`);
+      if(!rows[0])return json(res,404,{ok:false,error:'Session not found.'});
+      if(rows[0].revoked_at)return json(res,200,{ok:true,revoked:true});
+      await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&user_id=eq.${encodeURIComponent(authUser.id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({last_seen_at:new Date().toISOString()})});
+      return json(res,200,{ok:true,revoked:false});
+    }
     if(action==='check_session'){
       const checkId=String(req.query?.id || (req.body||{}).id || '');
       if(!checkId) return json(res,400,{ok:false,error:'Session ID required.'});
-      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&select=revoked_at,last_seen_at&limit=1`);
-      return json(res,200,{ok:true,revoked:!!rows[0]?.revoked_at});
+      const authUser=await authenticatedUser(token);
+      if(!authUser?.id)return json(res,401,{ok:false,error:'Invalid admin session.'});
+      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(checkId)}&user_id=eq.${encodeURIComponent(authUser.id)}&select=revoked_at,last_seen_at&limit=1`);
+      if(!rows[0])return json(res,404,{ok:false,error:'Session not found.'});
+      return json(res,200,{ok:true,revoked:!!rows[0].revoked_at});
     }
     if(action==='force_logout'){
       const id=String((req.body||{}).id || req.query?.id || '');
