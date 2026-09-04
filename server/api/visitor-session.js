@@ -26,13 +26,17 @@ export default async function handler(req,res){
     const {device_id,visitor_name}=body;
     if(!/^[A-Za-z0-9._:-]{8,120}$/.test(String(device_id||'')))return json(res,400,{ok:false,error:'Invalid device ID.'});
     if(!String(visitor_name||'').trim())return json(res,400,{ok:false,error:'Name is required.'});
-    const i=info(req); const existingToken=cookie(req,COOKIE); const tokenHash=existingToken?hash(existingToken):''; const ipHash=hash(i.ip||'unknown');
+    const i=info(req); const existingToken=cookie(req,COOKIE); const ipHash=hash(i.ip||'unknown');
     let existing=[];
-    if(tokenHash) existing=await fetch(`${SUPABASE_URL}/rest/v1/visitor_sessions?visitor_token_hash=eq.${encodeURIComponent(tokenHash)}&select=id,blocked&limit=1`,{headers:adminHeaders}).then(x=>x.ok?x.json():[]);
-    if(!existing.length) existing=await fetch(`${SUPABASE_URL}/rest/v1/visitor_sessions?device_id=eq.${encodeURIComponent(device_id)}&select=id,blocked&limit=1`,{headers:adminHeaders}).then(x=>x.ok?x.json():[]);
+    if(existingToken){
+      const existingHash=hash(existingToken);
+      existing=await fetch(`${SUPABASE_URL}/rest/v1/visitor_sessions?device_id=eq.${encodeURIComponent(device_id)}&select=id,blocked&limit=1`,{headers:adminHeaders}).then(x=>x.ok?x.json():[]);
+    } else {
+      existing=await fetch(`${SUPABASE_URL}/rest/v1/visitor_sessions?device_id=eq.${encodeURIComponent(device_id)}&select=id,blocked&limit=1`,{headers:adminHeaders}).then(x=>x.ok?x.json():[]);
+    }
     if(existing?.[0]?.blocked)return json(res,200,{ok:true,blocked:true});
-    const visitorToken=existingToken||token(); const newHash=hash(visitorToken);
-    const payload={visitor_token_hash:newHash,device_id,visitor_name:String(visitor_name).trim().slice(0,80),role:'visitor',ip_address:i.ip,ip_hash:ipHash,device:i.device,user_agent:i.ua,last_seen_at:new Date().toISOString()};
+    const visitorToken=existingToken||token();
+    const payload={device_id,visitor_name:String(visitor_name).trim().slice(0,80),role:'visitor',ip_address:i.ip,device:i.device,user_agent:i.ua,last_seen_at:new Date().toISOString()};
     const r=await fetch(`${SUPABASE_URL}/rest/v1/visitor_sessions?on_conflict=device_id`,{method:'POST',headers:{...adminHeaders,Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});
     const d=await r.text();if(!r.ok)return json(res,r.status,{ok:false,error:d});
     if(!existingToken)res.setHeader('Set-Cookie',`${COOKIE}=${encodeURIComponent(visitorToken)}; Path=/; Max-Age=31536000; HttpOnly${secureFlag(req)}; SameSite=Lax`);
