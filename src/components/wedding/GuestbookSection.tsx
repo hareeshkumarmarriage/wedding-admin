@@ -4,6 +4,12 @@ import { motion } from "framer-motion";
 import { addGuestbookMessage, getGuestbookMessages, type GuestbookMessage as LocalMessage } from "@/lib/weddingStorage";
 import { getApprovedGuestbook, getSiteSettings, isSupabaseConfigured, submitGuestbook } from "@/lib/supabaseData";
 
+type WeddingSettings = {
+  featuredGuestbookCount?: number;
+  guestbookHeading?: string;
+  guestbookDescription?: string;
+};
+
 const GuestbookSection = () => {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -13,7 +19,7 @@ const GuestbookSection = () => {
   const [saving, setSaving] = useState(false);
   const [website, setWebsite] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(6);
-  const [content, setContent] = useState<any>({});
+  const [content, setContent] = useState<WeddingSettings>({});
 
   const recentMessages = useMemo(() => messages.slice(0, featuredLimit), [messages, featuredLimit]);
 
@@ -22,8 +28,9 @@ const GuestbookSection = () => {
       getApprovedGuestbook(30).then((items) => setMessages(items.map((item) => ({ id: item.id, name: item.name, message: item.message, createdAt: item.created_at })))).catch(() => {});
     }
     getSiteSettings().then((settings) => {
-      setContent(settings.wedding || {});
-      const count = Number(settings.wedding?.featuredGuestbookCount);
+      const wedding = settings.wedding as WeddingSettings | undefined;
+      setContent(wedding || {});
+      const count = Number(wedding?.featuredGuestbookCount);
       if (Number.isFinite(count) && count >= 3 && count <= 6) setFeaturedLimit(count);
     }).catch(() => {});
   }, []);
