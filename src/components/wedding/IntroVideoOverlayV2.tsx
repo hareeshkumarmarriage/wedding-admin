@@ -13,32 +13,39 @@ type WeddingSettings = {
   introVideoPlayMode?: "once" | "always";
 };
 
-export default function IntroVideoOverlayV2({ onFinished }: { onFinished: () => void }) {
+export default function IntroVideoOverlayV2({
+  onFinished,
+  settings: suppliedSettings,
+}: {
+  onFinished: () => void;
+  settings?: WeddingSettings;
+}) {
   const overlayRef = useRef<HTMLDivElement>(null);
-  const [settingsReady, setSettingsReady] = useState(false);
-  const [videoId, setVideoId] = useState(DEFAULT_INTRO_VIDEO_FILE_ID);
-  const [autoplay, setAutoplay] = useState(true);
-  const [portrait, setPortrait] = useState(false);
-  const [playMode, setPlayMode] = useState<"once" | "always">("once");
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
+  const [settingsReady, setSettingsReady] = useState(Boolean(suppliedSettings));
+  const [settings, setSettings] = useState<WeddingSettings | undefined>(suppliedSettings);
   const [fullscreen, setFullscreen] = useState(false);
   const [showSkip, setShowSkip] = useState(false);
   const finished = useRef(false);
 
   useEffect(() => {
+    if (suppliedSettings) {
+      setSettings(suppliedSettings);
+      setSettingsReady(true);
+      return;
+    }
     let active = true;
-    getSiteSettings().then((settings) => {
+    getSiteSettings().then((raw) => {
       if (!active) return;
-      const wedding = settings.wedding as WeddingSettings | undefined;
-      setVideoId(String(wedding?.introVideoDriveId || "").trim() || DEFAULT_INTRO_VIDEO_FILE_ID);
-      setAutoplay(wedding?.introAutoplay !== false);
-      setPortrait(wedding?.introMobilePortrait === true);
-      setPlayMode(wedding?.introVideoPlayMode === "always" ? "always" : "once");
+      setSettings((raw.wedding || {}) as WeddingSettings);
       setSettingsReady(true);
     }).catch(() => setSettingsReady(true));
     return () => { active = false; };
-  }, []);
+  }, [suppliedSettings]);
+
+  const videoId = String(settings?.introVideoDriveId || "").trim() || DEFAULT_INTRO_VIDEO_FILE_ID;
+  const autoplay = settings?.introAutoplay !== false;
+  const portrait = settings?.introMobilePortrait === true;
+  const playMode = settings?.introVideoPlayMode === "always" ? "always" : "once";
 
   const shouldPlay = useMemo(() => {
     if (playMode === "always") return true;
@@ -51,6 +58,9 @@ export default function IntroVideoOverlayV2({ onFinished }: { onFinished: () => 
     return `https://drive.google.com/file/d/${encodeURIComponent(videoId)}/preview?${params.toString()}`;
   }, [videoId, autoplay]);
 
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
   useEffect(() => {
     if (!settingsReady || !shouldPlay) {
       if (settingsReady && !shouldPlay) finish();
@@ -58,11 +68,9 @@ export default function IntroVideoOverlayV2({ onFinished }: { onFinished: () => 
     }
     setLoaded(false);
     setError(!previewSource);
-    const timer = window.setTimeout(() => {
-      if (!loaded) setError(true);
-    }, 12000);
+    const timer = window.setTimeout(() => setError((current) => !current || !loaded ? true : current), 15000);
     return () => window.clearTimeout(timer);
-  }, [settingsReady, shouldPlay, previewSource, loaded]);
+  }, [settingsReady, shouldPlay, previewSource]);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
