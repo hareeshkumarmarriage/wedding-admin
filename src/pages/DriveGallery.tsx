@@ -73,7 +73,6 @@ const EVENT_MESSAGES: Record<string, string> = {
   "satyanarayana-vratham": "A peaceful celebration of gratitude, devotion, and blessings for our married life.",
 };
 
-
 const DriveGallery = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -355,14 +354,14 @@ const DriveGallery = () => {
                 {(eventRecord?.date || eventRecord?.venue_name) && <div className="mt-4 text-sm text-muted-foreground">{eventRecord?.date && <span>{new Date(`${eventRecord.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</span>}{eventRecord?.venue_name && <span>{eventRecord?.date ? " · " : ""}{eventRecord.venue_name}</span>}</div>}
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-2 md:justify-start">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm"><ImageIcon size={16} /> {photos.length} Photos</span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm"><PlayCircle size={16} /> {videoCount}{videoPageToken ? "+" : ""} Videos</span>
-              <button type="button" disabled={!videosEnabled} onClick={() => navigate(`/videos?event=${encodeURIComponent(event)}`)} className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-2 text-sm hover:bg-white"><PlayCircle size={16} /> Watch Videos</button>
-              <button type="button" onClick={() => setFavoritesOnly((value) => !value)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm ${favoritesOnly ? "border-primary bg-primary/10" : "border-primary/20 bg-white/70"}`}><Heart size={16} fill={favoritesOnly ? "currentColor" : "none"} /> Favorites ({favorites.length})</button>
-              <button type="button" disabled={visiblePhotos.length === 0 || !slideshowEnabled} onClick={() => { setSlideshow(true); selectPhoto(0); }} className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-2 text-sm disabled:opacity-50 hover:bg-white"><PlayCircle size={16} /> Play Slideshow</button>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm"><ImageIcon size={16} /> {photos.length} Photos</span>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm"><PlayCircle size={16} /> {videoCount}{videoPageToken ? "+" : ""} Videos</span>
+                  <button type="button" disabled={!videosEnabled} onClick={() => navigate(`/videos?event=${encodeURIComponent(event)}`)} className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-2 text-sm hover:bg-white"><PlayCircle size={16} /> Watch Videos</button>
+                  <button type="button" onClick={() => setFavoritesOnly((value) => !value)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm ${favoritesOnly ? "border-primary bg-primary/10" : "border-primary/20 bg-white/70"}`}><Heart size={16} fill={favoritesOnly ? "currentColor" : "none"} /> Favorites ({favorites.length})</button>
+                  <button type="button" disabled={visiblePhotos.length === 0 || !slideshowEnabled} onClick={() => { setSlideshow(true); selectPhoto(0); }} className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-2 text-sm disabled:opacity-50 hover:bg-white"><PlayCircle size={16} /> Play Slideshow</button>
+                </div>
+              </div>
             </div>
-            </div>
-          </div>
           </motion.div>
 
           {loading && <GallerySkeleton />}
@@ -371,7 +370,9 @@ const DriveGallery = () => {
 
           {!loading && !error && visiblePhotos.length === 0 && <div className="py-20 text-center"><Heart size={30} className="mx-auto mb-4 text-primary/50" fill="currentColor" /><h2 className="font-display text-2xl">{favoritesOnly ? "No favorite photos yet" : "No photos found"}</h2><p className="mt-2 text-sm text-muted-foreground">{favoritesOnly ? "Tap the heart on any photo to save it here." : "Add images to the Google Drive folder and refresh this page."}</p></div>}
 
-          {!loading && !error && visiblePhotos.length > 0 && <div className="columns-2 gap-3 md:columns-3 md:gap-5 lg:columns-4">{visiblePhotos.map((photo, index) => <PhotoCard key={photo.id} photo={photo} index={index} favorite={favorites.includes(photo.id)} onFavorite={() => togglePhotoFavorite(photo.id)} onClick={() => selectPhoto(index)} />)}</div>}\n\n          {!loading && !error && !favoritesOnly && photoPageToken && <div className="mt-8 flex justify-center"><button type="button" onClick={() => void loadMorePhotos()} disabled={loadingMore} className="inline-flex min-w-40 items-center justify-center gap-2 rounded-full border border-primary/20 bg-white/80 px-6 py-3 text-sm shadow-sm hover:bg-white disabled:cursor-wait disabled:opacity-60">{loadingMore && <Loader2 size={16} className="animate-spin" />} {loadingMore ? "Loading…" : "Load More Photos"}</button></div>}
+          {!loading && !error && visiblePhotos.length > 0 && <div className="columns-2 gap-3 md:columns-3 md:gap-5 lg:columns-4">{visiblePhotos.map((photo, index) => <PhotoCard key={photo.id} photo={photo} index={index} favorite={favorites.includes(photo.id)} onFavorite={() => togglePhotoFavorite(photo.id)} onClick={() => selectPhoto(index)} />)}</div>}
+
+          {!loading && !error && !favoritesOnly && photoPageToken && <div className="mt-8 flex justify-center"><button type="button" onClick={() => void loadMorePhotos()} disabled={loadingMore} className="inline-flex min-w-40 items-center justify-center gap-2 rounded-full border border-primary/20 bg-white/80 px-6 py-3 text-sm shadow-sm hover:bg-white disabled:cursor-wait disabled:opacity-60">{loadingMore && <Loader2 size={16} className="animate-spin" />} {loadingMore ? "Loading…" : "Load More Photos"}</button></div>}
         </div>
       </section>
 
