@@ -4,22 +4,30 @@ import { getDriveImageUrl, getDrivePhotosPage, type DrivePhoto } from "@/lib/goo
 import { getSiteSettings } from "@/lib/supabaseData";
 import galleryFallback from "@/assets/gallery-1.jpg";
 
+type WeddingSettings = {
+  galleryDriveFolderId?: string;
+  galleryLimit?: number;
+  galleryHeading?: string;
+  galleryDescription?: string;
+};
+
 const GallerySection = () => {
   const [photos, setPhotos] = useState<DrivePhoto[]>([]);
   const [folderId, setFolderId] = useState("");
-  const [content, setContent] = useState<any>({});
+  const [content, setContent] = useState<WeddingSettings>({});
 
   useEffect(() => {
     let active = true;
     getSiteSettings().then(async (settings) => {
-      const folder = String(settings.wedding?.galleryDriveFolderId || "").trim();
+      const wedding = settings.wedding as WeddingSettings | undefined;
+      const folder = String(wedding?.galleryDriveFolderId || "").trim();
       if (!active) return;
       setFolderId(folder);
-      setContent(settings.wedding || {});
+      setContent(wedding || {});
       if (!folder) return;
       try {
         const page = await getDrivePhotosPage("homepage", folder);
-        if (active) setPhotos(page.items.slice(0, Number(settings.wedding?.galleryLimit || 14)));
+        if (active) setPhotos(page.items.slice(0, Number(wedding?.galleryLimit || 14)));
       } catch {
         if (active) setPhotos([]);
       }
