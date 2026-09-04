@@ -95,15 +95,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: {
-      host: "localhost",
+      host: true,
       port: 8080,
       strictPort: true,
-      hmr: {
-        protocol: "ws",
-        host: "localhost",
-        port: 8080,
-        clientPort: 8080,
-      },
     },
     plugins: [react(), localApiPlugin()],
     resolve: {
