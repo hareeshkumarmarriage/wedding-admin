@@ -1,0 +1,50 @@
+name: Apply content manager fixes
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[auto-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch exact content-manager bugs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/pages/Admin.tsx')
+          s = p.read_text()
+          old = '''function ContentField({label,help,value,onChange,placeholder,locked=false,disabled=false}:{label:string;help?:string;value:any;onChange:(v:string)=>void;placeholder?:string;locked?:boolean;disabled?:boolean}) {\n  return <label className="block text-sm"><span className="font-medium">{label}</span>{locked&&<span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">🔒 Locked</span>}{help&&<span className="ml-2 text-[11px] text-muted-foreground">{help}</span>}<input readOnly={locked} value={value??""} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className={`mt-1 h-11 w-full rounded-xl border px-3 ${locked?"bg-muted/40 text-muted-foreground":""}`}/></label>;\n}'''
+          new = '''function ContentField({label,help,value,onChange,placeholder,locked=false,disabled=false}:{label:string;help?:string;value:any;onChange:(v:string)=>void;placeholder?:string;locked?:boolean;disabled?:boolean}) {\n  return <label className={`block text-sm ${disabled?"opacity-60":""}`}><span className="font-medium">{label}</span>{locked&&<span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">🔒 Locked</span>}{help&&<span className="ml-2 text-[11px] text-muted-foreground">{help}</span>}<input disabled={disabled} readOnly={locked} value={value??""} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className={`mt-1 h-11 w-full rounded-xl border px-3 ${locked||disabled?"bg-muted/40 text-muted-foreground":""}`}/></label>;\n}'''
+          if old in s:
+              s = s.replace(old, new, 1)
+          old = '''const resetSections=()=>{const byKey=new Map<string,HomepageSectionRecord>(sections.map(section=>[section.key,section]));setSections(defaultOrder.map((key,i)=>{const section=byKey.get(key);return section?{...section,sort_order:i+1}:null}).filter((section):section is HomepageSectionRecord=>Boolean(section)));};'''
+          new = '''const resetSections=()=>{const byKey=new Map<string,HomepageSectionRecord>(sections.map(section=>[section.key,section]));const known=defaultOrder.map((key,i)=>{const section=byKey.get(key);return section?{...section,sort_order:i+1}:null}).filter((section):section is HomepageSectionRecord=>Boolean(section));const unknown=sections.filter(section=>!defaultOrder.includes(section.key)).map((section,i)=>({...section,sort_order:known.length+i+1}));setSections([...known,...unknown]);};'''
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('src/lib/supabaseData.ts')
+          s = p.read_text()
+          old = 'body: { enabled: section.enabled, sort_order: index + 1, updated_at: new Date().toISOString() }'
+          new = 'body: { enabled: section.enabled, label: section.label, sort_order: index + 1, updated_at: new Date().toISOString() }'
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/Admin.tsx src/lib/supabaseData.ts
+          if git diff --cached --quiet; then
+            echo "No exact fixes needed"
+          else
+            git commit -m "fix: preserve custom homepage sections and labels [auto-fix]"
+            git push
+          fi
