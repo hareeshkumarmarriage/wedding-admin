@@ -14,13 +14,16 @@ export async function supabaseRest<T>(
   } = {},
 ): Promise<T> {
   if (!isSupabaseConfigured) throw new Error("Supabase is not configured");
+  const isRead = (options.method || "GET").toUpperCase() === "GET" || (options.method || "GET").toUpperCase() === "HEAD";
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}${options.query ? `?${options.query}` : ""}`, {
     method: options.method || "GET",
+    cache: isRead ? "no-store" : "default",
     headers: {
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${options.token || SUPABASE_ANON_KEY}`,
       "Content-Type": "application/json",
       ...(options.prefer ? { Prefer: options.prefer } : {}),
+      ...(isRead ? { "Cache-Control": "no-cache" } : {}),
     },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
