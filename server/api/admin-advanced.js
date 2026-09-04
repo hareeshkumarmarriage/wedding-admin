@@ -25,11 +25,11 @@ async function createRevision(admin,label,status='draft'){
 async function applySnapshot(snapshotData){
   const settings=snapshotData?.site_settings||[];
   for(const row of settings){await supa(`/rest/v1/site_settings?key=eq.${encodeURIComponent(row.key)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:row.key,value:row.value,updated_at:new Date().toISOString()})});}
-  for(const row of snapshotData?.homepage_sections||[]){await supa(`/rest/v1/homepage_sections?key=eq.${encodeURIComponent(row.key)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:{enabled:row.enabled,sort_order:row.sort_order,updated_at:new Date().toISOString()}});}
+  for(const row of snapshotData?.homepage_sections||[]){await supa(`/rest/v1/homepage_sections?key=eq.${encodeURIComponent(row.key)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({enabled:row.enabled,sort_order:row.sort_order,updated_at:new Date().toISOString()})});}
   for(const row of snapshotData?.events||[]){
     if(!row.id)continue;
     const {id,created_at,...patch}=row;
-    await supa(`/rest/v1/events?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:{...patch,updated_at:new Date().toISOString()}});
+    await supa(`/rest/v1/events?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({...patch,updated_at:new Date().toISOString()})});
   }
 }
 
@@ -57,7 +57,7 @@ export default async function handler(req,res){
       const rows=await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(id)}&select=id,version_no,status,label,snapshot&limit=1`);const revision=rows[0];
       if(!revision)return json(res,404,{ok:false,error:'Revision not found.'});
       await applySnapshot(revision.snapshot);
-      await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:{status:'published',published_at:new Date().toISOString()}});
+      await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'published',published_at:new Date().toISOString()})});
       await supa('/rest/v1/admin_publish_history',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({revision_id:id,action,published_by:admin.id})});
       await activity(admin,action,'revision',id,{version_no:revision.version_no,label:revision.label});
       return json(res,200,{ok:true,message:action==='rollback'?'Revision rolled back successfully.':'Revision published successfully.',revision_id:id});
