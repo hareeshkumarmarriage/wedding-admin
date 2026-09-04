@@ -6,6 +6,15 @@ createRoot(document.getElementById("root")!).render(<App />);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    if (import.meta.env.PROD) {
+      void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      return;
+    }
+
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        void registration.unregister();
+      });
+    }).catch(() => undefined);
   });
 }
