@@ -118,7 +118,7 @@ const Index = () => {
         { key: "hero", enabled: true, sort_order: 1, label: "Hero" }, { key: "couple", enabled: true, sort_order: 2, label: "Couple" }, { key: "story", enabled: true, sort_order: 3, label: "Story & Memories" }, { key: "gallery", enabled: true, sort_order: 4, label: "Gallery" }, { key: "events", enabled: true, sort_order: 5, label: "Wedding & Venue" }, { key: "rsvp", enabled: true, sort_order: 6, label: "RSVP" }, { key: "guestbook", enabled: true, sort_order: 7, label: "Guestbook" }, { key: "blog", enabled: false, sort_order: 8, label: "Blog" }, { key: "footer", enabled: true, sort_order: 9, label: "Footer" },
       ]).filter((s) => s.enabled && (siteControl.mode !== "landing" || ["hero", "events", "footer"].includes(s.key))).map((section) => {
         switch (section.key) {
-          case "hero": return <div key={section.key} id="home"><HeroSection /></div>;
+          case "hero": return <div key={section.key} id="home"><HeroSection settings={wedding} /></div>;
           case "couple": return <div key={section.key} id="couple"><CoupleSection /></div>;
           case "story": return <div key={section.key} id="story"><StorySection /></div>;
           case "gallery": return <div key={section.key} id="gallery"><GallerySection /></div>;
