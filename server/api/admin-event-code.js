@@ -63,16 +63,13 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
 
-  if (!['GET','POST'].includes(req.method)) {
+  if (!["GET", "POST"].includes(req.method)) {
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
   if (!sameOrigin(req)) return res.status(403).json({ ok: false, error: "Forbidden" });
 
   const body = req.body || {};
-  // Use the authenticated admin's Supabase session for the database operations.
-  // This works with the normal VITE_* Supabase configuration and does not require
-  // exposing or depending on a service-role key for this admin action.
   const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
   if (!supabaseUrl || !anonKey) {
@@ -119,8 +116,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, message: `Security code changed for ${allEventsResult.body.length} events.`, count: allEventsResult.body.length });
     }
 
-    // Ensure the event exists and the supplied slug matches it. This prevents an admin from
-    // accidentally updating the wrong event through a stale dashboard state.
     const eventResult = await supabaseFetch(
       `${supabaseUrl}/rest/v1/events?select=id,slug&id=eq.${encodeURIComponent(eventId)}&limit=1`,
       { headers: { apikey: anonKey, Authorization: `Bearer ${token}` } },
@@ -133,12 +128,7 @@ export default async function handler(req, res) {
       `${supabaseUrl}/rest/v1/events?id=eq.${encodeURIComponent(eventId)}`,
       {
         method: "PATCH",
-        headers: {
-          apikey: anonKey,
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
+        headers: { apikey: anonKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
         body: JSON.stringify({ secret_code_hash: hashCode(code), secret_code_encrypted: encryptCode(code), updated_at: new Date().toISOString() }),
       },
     );
@@ -150,26 +140,19 @@ export default async function handler(req, res) {
       return res.status(502).json({ ok: false, error: "Unable to change the security code." });
     }
 
-    // Audit through the authenticated admin token; the RLS policy verifies admin_id and admin role.
     const auditResult = await supabaseFetch(`${supabaseUrl}/rest/v1/admin_audit_logs`, {
       method: "POST",
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        admin_id: adminId,
-        action: "change_event_code",
-        target_id: eventId,
-        details: { slug },
-      }),
+      headers: { apikey: anonKey, Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ admin_id: adminId, action: "change_event_code", target_id: eventId, details: { slug } }),
     });
     if (!auditResult.response.ok) console.error("Event code audit failed", auditResult.response.status);
 
     return res.status(200).json({ ok: true, message: "Security code changed successfully." });
   } catch (error) {
+    const status = Number(error?.status);
+    if (status === 401 || status === 403) {
+      return res.status(status).json({ ok: false, error: error.message || "Administrator access is required." });
+    }
     console.error("Admin event code API error", error);
     return res.status(500).json({ ok: false, error: "Unable to change the security code." });
   }
