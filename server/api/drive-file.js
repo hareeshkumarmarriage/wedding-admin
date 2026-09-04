@@ -1,26 +1,3 @@
-import crypto from "node:crypto";
-
-function sign(value) {
-  return crypto.createHmac("sha256", process.env.EVENT_UNLOCK_SECRET || "").update(value).digest("base64url");
-}
-function getCookie(req, name) {
-  const header = String(req.headers.cookie || "");
-  const match = header.split(";").map((v) => v.trim()).find((v) => v.startsWith(`${name}=`));
-  return match ? decodeURIComponent(match.slice(name.length + 1)) : "";
-}
-function hasUnlock(req, event, codeVersion) {
-  const raw = getCookie(req, "wedding_unlock");
-  const [payload, signature] = raw.split(".");
-  if (!payload || !signature || !process.env.EVENT_UNLOCK_SECRET) return false;
-  const expected = sign(payload);
-  if (signature.length !== expected.length) return false;
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return false;
-  try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    return data.event === event && data.codeVersion === codeVersion && Number(data.exp) > Date.now();
-  } catch { return false; }
-}
-
 async function isAdmin(req, supabaseUrl, serviceKey) {
   const auth = String(req.headers.authorization || "");
   const token = auth.replace(/^Bearer\s+/i, "").trim();
