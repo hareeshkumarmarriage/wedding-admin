@@ -38,8 +38,9 @@ export default async function handler(req,res){
       await supa('/rest/v1/profiles',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({id:u.id,username:username||email.split('@')[0],display_name:display_name||'',role:role==='admin'?'admin':'guest',updated_at:new Date().toISOString()})});
       return json(res,200,{ok:true,id:u.id});
     }
-    const id=String((req.body||{}).id||''); if(!id) return json(res,400,{ok:false,error:'User ID is required.'});
+    const id=String((req.body||{}).id||'');
     if(action==='update'){
+      if(!id) return json(res,400,{ok:false,error:'User ID is required.'});
       const {email,password,username,display_name,role}=req.body||{};
       const currentUser=await authenticatedUser(token);
       if(!currentUser?.id)return json(res,401,{ok:false,error:'Invalid admin session.'});
@@ -56,6 +57,7 @@ export default async function handler(req,res){
       return json(res,200,{ok:true});
     }
     if(action==='delete'){
+      if(!id) return json(res,400,{ok:false,error:'User ID is required.'});
       const currentUser=await authenticatedUser(token);
       if(currentUser?.id===id)return json(res,400,{ok:false,error:'You cannot delete your own active admin account.'});
       const profiles=await supa('/rest/v1/profiles?select=id,role');
@@ -75,7 +77,8 @@ export default async function handler(req,res){
       return json(res,200,{ok:true,session_id:(await supa(`/rest/v1/admin_sessions?user_id=eq.${encodeURIComponent(authUser.id)}&select=id&order=created_at.desc&limit=1`))[0]?.id || null});
     }
     if(action==='list_sessions'){
-      return json(res,200,{ok:true,sessions:await supa('/rest/v1/admin_sessions?select=*&revoked_at=is.null&order=last_seen_at.desc&limit=100')});
+      const sessions=await supa('/rest/v1/admin_sessions?select=*&revoked_at=is.null&order=last_seen_at.desc&limit=100');
+      return json(res,200,{ok:true,sessions});
     }
     if(action==='heartbeat'){
       const checkId=String(req.query?.id || (req.body||{}).id || '');
@@ -98,13 +101,7 @@ export default async function handler(req,res){
       return json(res,200,{ok:true,revoked:!!rows[0].revoked_at});
     }
     if(action==='force_logout'){
-      const id=String((req.body||{}).id || req.query?.id || '');
       if(!id) return json(res,400,{ok:false,error:'Session ID required.'});
-      const rows=await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(id)}&select=user_id`);
-      const uid=rows[0]?.user_id;
-      if(uid){
-        await supa(`/auth/v1/admin/users/${encodeURIComponent(uid)}`,{method:'PUT',body:JSON.stringify({user_metadata:{force_logout_at:new Date().toISOString()}})});
-      }
       await supa(`/rest/v1/admin_sessions?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({revoked_at:new Date().toISOString()})});
       return json(res,200,{ok:true});
     }
