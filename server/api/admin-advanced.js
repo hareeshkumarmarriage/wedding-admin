@@ -25,7 +25,7 @@ async function createRevision(admin,label,status='draft'){
 async function applySnapshot(snapshotData){
   const settings=snapshotData?.site_settings||[];
   for(const row of settings){await supa(`/rest/v1/site_settings?key=eq.${encodeURIComponent(row.key)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:row.key,value:row.value,updated_at:new Date().toISOString()})});}
-  for(const row of snapshotData?.homepage_sections||[]){await supa(`/rest/v1/homepage_sections?key=eq.${encodeURIComponent(row.key)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({enabled:row.enabled,sort_order:row.sort_order,updated_at:new Date().toISOString()})});}
+  for(const row of snapshotData?.homepage_sections||[]){await supa(`/rest/v1/homepage_sections?key=eq.${encodeURIComponent(row.key)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({label:row.label,enabled:row.enabled,sort_order:row.sort_order,updated_at:new Date().toISOString()})});}
   for(const row of snapshotData?.events||[]){
     if(!row.id)continue;
     const {id,created_at,...patch}=row;
