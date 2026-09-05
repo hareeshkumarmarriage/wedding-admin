@@ -1,0 +1,20 @@
+/* Targeted admin fit fix: preserve the existing UI and only reduce header height on phones. */
+@media (max-width: 767px) {
+  body:has(.bg-muted\/20) header {
+    height: 3.5rem;
+    min-height: 3.5rem;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  body:has(.bg-muted\/20) header > * {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  body:has(.bg-muted\/20) header {
+    height: 3.25rem;
+    min-height: 3.25rem;
+  }
+}
