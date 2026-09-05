@@ -4,13 +4,9 @@ import "./index.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Admin-only enhancements are loaded on demand so the public wedding page
-// does not pay the cost of dashboard scripts or their dependencies.
-if (window.location.pathname.startsWith("/admin")) {
-  void import("./admin-ui-polish.js");
-  void import("./admin-advanced.js");
-  void import("./admin-final-hardening.js");
-}
+// The admin control center is React-controlled. Do not load legacy DOM
+// enhancement scripts here: they used document-wide mutation observers and
+// could repeatedly react to React renders, causing the dashboard to freeze.
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
