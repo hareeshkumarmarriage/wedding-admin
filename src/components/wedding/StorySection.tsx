@@ -5,7 +5,7 @@ import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import story1 from "@/assets/gallery/8-1.webp";
 import story2 from "@/assets/gallery/drive-cover.webp";
-import { getEvents, type EventRecord } from "@/lib/supabaseData";
+import { getEvents, getSiteSettings, type EventRecord } from "@/lib/supabaseData";
 
 const fallbackStories = [
   ["engagement", "Engagement", "01 Mar 2026", story1], ["pre-wedding", "Pre-Wedding Photoshoot", "22 Mar 2026", story1],
@@ -18,12 +18,13 @@ const fallbackStories = [
 export default function StorySection() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<EventRecord[]>([]);
-  useEffect(() => { getEvents().then(setEvents); }, []);
+  const [wedding, setWedding] = useState<any>({});
+  useEffect(() => { getEvents().then(setEvents); getSiteSettings().then((settings) => setWedding(settings.wedding || {})).catch(() => {}); }, []);
   const cards = events.length ? events : fallbackStories.map(([slug, title, date, image], index) => ({ slug, title, date, description: `${title} memories of Hareesh & Prasanna.`, cover_image: image, sort_order: index } as EventRecord));
-
+  if (wedding.storyEnabled === false) return null;
   return <section className="bg-wedding-cream py-20 md:py-28">
     <div className="wedding-container">
-      <div className="mb-16 text-center"><p className="section-subtitle mb-3">Our Journey</p><h2 className="section-title">Events Timeline</h2><p className="mt-4 font-accent text-lg text-muted-foreground">A collection of beautiful moments from our journey</p></div>
+      <div className="mb-16 text-center"><p className="section-subtitle mb-3">{String(wedding.storyTitle || "Our Journey")}</p><h2 className="section-title">Events Timeline</h2><p className="mt-4 font-accent text-lg text-muted-foreground">{String(wedding.storyDescription || "A collection of beautiful moments from our journey")}</p></div>
       <div className="relative"><div className="absolute bottom-0 left-1/2 top-0 hidden w-px bg-primary/20 md:block" />
         {cards.map((story, index) => {
           const fallback = fallbackStories.find((x) => x[0] === story.slug);
@@ -33,23 +34,7 @@ export default function StorySection() {
           const date = story.date ? new Date(`${story.date}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : (fallback?.[2] as string || "");
           const isReverse = index % 2 === 1;
           return <motion.div key={story.slug} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: .6, delay: index * .06 }} className={`mb-16 flex flex-col items-center gap-8 md:flex-row ${isReverse ? "md:flex-row-reverse" : ""}`}>
-            <div className="md:w-1/2"><button onClick={() => navigate(`/gallery?event=${encodeURIComponent(story.slug)}`)} className="group block w-full text-left"><div className="aspect-[4/3] overflow-hidden rounded-2xl bg-white shadow-xl"><img
-                  src={image}
-                  alt={story.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={(event) => {
-                    const img = event.currentTarget;
-                    const direct = story.cover_image_drive_id ? getDriveDirectThumbnailUrl(story.cover_image_drive_id, 1600) : "";
-                    if (direct && img.dataset.driveFallback !== "1") {
-                      img.dataset.driveFallback = "1";
-                      img.src = direct;
-                    } else if (img.dataset.staticFallback !== "1") {
-                      img.dataset.staticFallback = "1";
-                      img.src = fallbackImage;
-                    }
-                  }}
-                /></div></button></div>
+            <div className="md:w-1/2"><button onClick={() => navigate(`/gallery?event=${encodeURIComponent(story.slug)}`)} className="group block w-full text-left"><div className="aspect-[4/3] overflow-hidden rounded-2xl bg-white shadow-xl"><img src={image} alt={story.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onError={(event) => { const img = event.currentTarget; const direct = story.cover_image_drive_id ? getDriveDirectThumbnailUrl(story.cover_image_drive_id, 1600) : ""; if (direct && img.dataset.driveFallback !== "1") { img.dataset.driveFallback = "1"; img.src = direct; } else if (img.dataset.staticFallback !== "1") { img.dataset.staticFallback = "1"; img.src = fallbackImage; } }} /></div></button></div>
             <div className="hidden h-4 w-4 shrink-0 rounded-full border-4 border-wedding-cream bg-primary md:block" />
             <div className={`text-center md:w-1/2 ${isReverse ? "md:text-right" : "md:text-left"}`}>
               <button onClick={() => navigate(`/gallery?event=${encodeURIComponent(story.slug)}`)} className="group text-left"><h3 className="font-display text-2xl transition-colors group-hover:text-primary">{story.title}</h3><p className="mb-3 mt-1 font-accent text-sm tracking-wider text-primary">{date}</p></button>
