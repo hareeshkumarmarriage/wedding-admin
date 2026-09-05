@@ -1,0 +1,15 @@
+/* Mobile-safe helpers for admin surfaces. Keep layout controlled by React/Tailwind; no DOM observers. */
+.admin-mobile-safe,
+.admin-mobile-safe * { box-sizing: border-box; }
+.admin-mobile-safe { width: 100%; min-width: 0; max-width: 100%; overflow-x: hidden; }
+.admin-mobile-safe input,
+.admin-mobile-safe textarea,
+.admin-mobile-safe select,
+.admin-mobile-safe button { max-width: 100%; }
+@media (max-width: 767px) {
+  .admin-mobile-safe .admin-card-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .admin-mobile-safe .admin-action-row { flex-wrap: wrap !important; }
+  .admin-mobile-safe .admin-action-row > * { min-width: 0; flex: 1 1 100%; }
+  .admin-mobile-safe .admin-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .admin-mobile-safe .admin-tabs::-webkit-scrollbar { display: none; }
+}
