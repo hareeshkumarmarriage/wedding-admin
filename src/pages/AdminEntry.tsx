@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { LogIn, RefreshCw, Sparkles } from "lucide-react";
-import AdminControlCenter from "./AdminControlCenter";
+import AdminControlCenter from "./AdminControlCenterV2";
 import { supabaseAuthPassword } from "@/lib/supabase";
 
 const TOKEN_KEY = "wedding-admin-access-token";
@@ -16,8 +16,7 @@ export default function AdminEntry() {
   if (token) return <AdminControlCenter />;
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
+    event.preventDefault(); setError("");
     if (!email.trim() || !password) { setError("Enter your email and password."); return; }
     setBusy(true);
     try {
