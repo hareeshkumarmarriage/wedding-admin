@@ -36,7 +36,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/gallery" element={<PageAvailabilityGate page="gallery"><DriveGallery /></PageAvailabilityGate>} />
           <Route path="/videos" element={<PageAvailabilityGate page="videos"><DriveVideos /></PageAvailabilityGate>} />
-          <Route path="/admin" element={<AdminPlatform />} />
+          <Route path="/admin" element={<AdminLegacy />} />
+          <Route path="/admin/platform" element={<AdminPlatform />} />
           <Route path="/admin/legacy" element={<AdminLegacy />} />
           <Route path="/upload" element={<PageAvailabilityGate page="upload"><GuestUpload /></PageAvailabilityGate>} />
           <Route path="*" element={<NotFound />} />
