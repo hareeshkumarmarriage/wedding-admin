@@ -170,7 +170,7 @@ export async function getAdminSettings(token: string) { return supabaseRest<{ ke
 export async function saveSiteSetting(token: string, key: string, value: any) { return supabaseRest("site_settings", { method: "POST", token, query: `on_conflict=key`, body: { key, value, updated_at: new Date().toISOString() }, prefer: "resolution=merge-duplicates,return=representation" }); }
 
 export interface HomepageSectionRecord { key: string; label: string; enabled: boolean; sort_order: number; }
-export async function getHomepageSections() { if (!isSupabaseConfigured) return [] as HomepageSectionRecord[]; try { return await supabaseRest<HomepageSectionRecord[]>("homepage_sections", { query: "select=*&order=sort_order.asc" }); } catch { return []; } }
+export async function getHomepageSections() { if (!isSupabaseConfigured) return [] as HomepageSectionRecord[]; try { return await supabaseRest<HomepageSectionRecord[]>("homepage_sections_public", { query: "select=key,label,enabled,sort_order,updated_at&order=sort_order.asc" }); } catch { return []; } }
 export async function getAdminHomepageSections(token: string) { return supabaseRest<HomepageSectionRecord[]>("homepage_sections", { token, query: "select=*&order=sort_order.asc" }); }
 export async function updateHomepageSections(token: string, sections: HomepageSectionRecord[]) { for (const [index, section] of sections.entries()) await supabaseRest("homepage_sections", { method: "PATCH", token, query: `key=eq.${encodeURIComponent(section.key)}`, body: { enabled: section.enabled, label: section.label, sort_order: index + 1, updated_at: new Date().toISOString() } }); }
 
