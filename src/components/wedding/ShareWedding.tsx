@@ -7,28 +7,24 @@ type ShareSettings = {
   youtubeUrl?: string;
   facebookUrl?: string;
   whatsappUrl?: string;
-  position?: "left" | "right";
 };
 
 const ShareWedding = () => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [wedding, setWedding] = useState<any>({});
-  const [share, setShare] = useState<ShareSettings>({ position: "left" });
+  const [share, setShare] = useState<ShareSettings>({});
   const url = typeof window !== "undefined" ? window.location.href.split("#")[0] : "";
 
   useEffect(() => {
     getSiteSettings().then((settings) => {
       setWedding(settings.wedding || {});
       const social = settings.social || {};
-      // Accept both the admin's friendly field names and the public component's
-      // URL names so saved social settings always reach the share menu.
       setShare({
         instagramUrl: social.instagramUrl || social.instagram || "https://www.instagram.com/pavan_kumar._.pk?igsi=MjJqcDhhajFmdGpw",
         youtubeUrl: social.youtubeUrl || social.youtube || "https://wedding-admin-swart.vercel.app/",
         facebookUrl: social.facebookUrl || social.facebook || "",
         whatsappUrl: social.whatsappUrl || social.whatsapp || "",
-        position: social.position === "right" ? "right" : "left",
       });
     }).catch(() => {});
   }, []);
@@ -69,9 +65,7 @@ const ShareWedding = () => {
     { key: "whatsappUrl", label: "WhatsApp", icon: MessageCircle },
   ].filter((item) => share[item.key as keyof ShareSettings]);
 
-  const positionClass = share.position === "right" ? "right-5" : "left-5";
-
-  return <div className={`fixed bottom-5 ${positionClass} z-40`}>
+  return <div className="fixed bottom-5 left-5 z-40">
     {open && <div className="mb-3 w-72 max-w-[calc(100vw-2.5rem)] rounded-3xl border border-primary/10 bg-background/95 p-3 shadow-xl backdrop-blur" role="dialog" aria-label="Share wedding">
       <div className="mb-2 flex items-center justify-between px-2">
         <span className="font-display text-lg">Share Wedding</span>
