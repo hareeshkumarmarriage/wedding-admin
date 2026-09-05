@@ -10,6 +10,7 @@ if (window.location.pathname.startsWith("/admin")) {
   void import("./admin-ui-polish.js");
   void import("./admin-advanced.js");
   void import("./admin-final-hardening.js");
+  void import("./admin-responsive-fix.js");
 }
 
 if ("serviceWorker" in navigator) {
