@@ -79,10 +79,7 @@ const FALLBACK: EventRecord[] = [
   maps_url: null,
 }));
 
-let cache: {
-  at: number;
-  data: EventRecord[];
-} | null = null;
+let cache: { at: number; data: EventRecord[] } | null = null;
 
 export async function getEvents(force = false): Promise<EventRecord[]> {
   if (!force && cache && Date.now() - cache.at < 60_000) return cache.data;
@@ -91,7 +88,9 @@ export async function getEvents(force = false): Promise<EventRecord[]> {
     const data = await supabaseRest<EventRecord[]>("events_public", { query: "select=*&order=sort_order.asc" });
     cache = { at: Date.now(), data };
     return data;
-  } catch { return FALLBACK; }
+  } catch {
+    return FALLBACK;
+  }
 }
 
 export async function getEvent(slug: string) {
@@ -100,7 +99,11 @@ export async function getEvent(slug: string) {
 
 export async function submitGuestbook(name: string, message: string, website = "") {
   if (!isSupabaseConfigured) return null;
-  const response = await fetch("/api/guestbook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, message, website }) });
+  const response = await fetch("/api/guestbook", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, message, website }),
+  });
   let data: { ok?: boolean; error?: string } = {};
   try { data = await response.json(); } catch { /* ignore */ }
   if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save your message right now.");
@@ -109,7 +112,10 @@ export async function submitGuestbook(name: string, message: string, website = "
 
 export async function getApprovedGuestbook(limit = 30): Promise<GuestbookMessage[]> {
   if (!isSupabaseConfigured) return [];
-  const response = await fetch(`/api/guestbook?limit=${Math.min(Math.max(limit, 1), 100)}`, { cache: "no-store", headers: { Accept: "application/json" } });
+  const response = await fetch(`/api/guestbook?limit=${Math.min(Math.max(limit, 1), 100)}`, {
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
   const data = await response.json().catch(() => null);
   if (!response.ok || !Array.isArray(data)) throw new Error(data?.error || "Unable to load guestbook.");
   return data;
@@ -138,9 +144,8 @@ export async function writeAdminAudit(token: string, action: "login" | "logout" 
     const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` } });
     if (!authResponse.ok) return;
     const auth = await authResponse.json() as { id?: string };
-    const adminId = auth.id;
-    if (!adminId) return;
-    await supabaseRest("admin_audit_logs", { method: "POST", token, body: { admin_id: adminId, action, target_id: targetId || null, details }, prefer: "return=minimal" });
+    if (!auth.id) return;
+    await supabaseRest("admin_audit_logs", { method: "POST", token, body: { admin_id: auth.id, action, target_id: targetId || null, details }, prefer: "return=minimal" });
   } catch { /* Audit logging must never block the primary admin action. */ }
 }
 
@@ -176,7 +181,7 @@ export async function updateHomepageSections(token: string, sections: HomepageSe
 
 export interface NotificationRecord { id: string; type: string; title: string; message: string; target: string | null; read_at: string | null; created_at: string; }
 export async function getNotifications(token: string) { return supabaseRest<NotificationRecord[]>("notifications", { token, query: "select=*&order=created_at.desc&limit=50" }); }
-export async function getPublicNotifications(limit=10) { if(!isSupabaseConfigured) return []; return supabaseRest<NotificationRecord[]>("notifications_public", { query: `limit=${limit}` }); }
+export async function getPublicNotifications(limit=10) { if(!isSupabaseConfigured) return []; return supabaseRest<NotificationRecord[]>("notifications_public", { query: `limit=${Math.min(Math.max(limit, 1), 50)}` }); }
 export async function createNotification(token: string, payload: Partial<NotificationRecord>) { return supabaseRest("notifications", { method: "POST", token, body: payload, prefer: "return=representation" }); }
 export async function markNotificationRead(token: string, id: string) { return supabaseRest("notifications", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: { read_at: new Date().toISOString() } }); }
 export async function deleteNotification(token: string, id: string) { return supabaseRest("notifications", { method: "DELETE", token, query: `id=eq.${encodeURIComponent(id)}` }); }
@@ -198,12 +203,34 @@ export async function updateAdminEvent(token: string, id: string, patch: Partial
 export async function recordAnalytics(eventId: string | null, type: string, mediaId?: string | null) { if (!isSupabaseConfigured) return; if (!["event_view", "photo_open", "video_open"].includes(type)) return; try { const response = await fetch("/api/analytics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_id: eventId && /^[0-9a-f-]{36}$/i.test(eventId) ? eventId : null, media_type: type, media_id: mediaId || null, visitor_id: getVisitorId() }), keepalive: true }); if (!response.ok) return; } catch { /* Analytics must never block the website. */ } }
 export function getVisitorId() { const key = "wedding-visitor-id-v1"; try { const existing = localStorage.getItem(key); if (existing) return existing; const id = crypto.randomUUID(); localStorage.setItem(key, id); return id; } catch { return `visitor-${Math.random().toString(36).slice(2)}`; } }
 export async function savePhotoReaction(eventId: string, photoId: string, reaction: "heart" | "love" | "smile") { if (!isSupabaseConfigured) return; try { await supabaseRest("photo_reactions", { method: "POST", body: { visitor_id: getVisitorId(), event_id: eventId, photo_id: photoId, reaction }, prefer: "resolution=ignore-duplicates,return=minimal" }); } catch { /* reactions never block gallery */ } }
-export async function getRemoteFavoriteIds(_eventId: string) { return []; }
-export async function saveFavorite(_eventId: string, _photoId: string, _favorite: boolean) { }
+
+const FAVORITES_KEY = "wedding-favorites-v1";
+function readFavorites(): Record<string, string[]> {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+export async function getRemoteFavoriteIds(eventId: string) {
+  if (!eventId) return [] as string[];
+  const favorites = readFavorites();
+  return Array.isArray(favorites[eventId]) ? favorites[eventId] : [];
+}
+export async function saveFavorite(eventId: string, photoId: string, favorite: boolean) {
+  if (!eventId || !photoId) return;
+  const favorites = readFavorites();
+  const current = new Set(Array.isArray(favorites[eventId]) ? favorites[eventId] : []);
+  if (favorite) current.add(photoId); else current.delete(photoId);
+  favorites[eventId] = Array.from(current);
+  try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites)); } catch { /* Storage may be unavailable in private browsing. */ }
+}
 
 export async function getAdminAnalytics(token: string) {
   if (!token) throw new Error("Admin session is missing.");
-  const rows = await supabaseRest<any[]>("gallery_views", { token, query: "select=event_id,media_type,media_id,created_at&order=created_at.desc" });
+  const rows = await supabaseRest<any[]>("gallery_views", { token, query: "select=event_id,media_type,media_id,created_at&order=created_at.desc&limit=1000" });
   const byType = rows.reduce((acc: Record<string, number>, row) => { acc[row.media_type] = (acc[row.media_type] || 0) + 1; return acc; }, {});
   let reactions: any[] = [];
   try { reactions = await supabaseRest<any[]>("photo_reactions", { token, query: "select=photo_id,reaction,event_id,created_at&order=created_at.desc&limit=500" }); } catch { reactions = []; }
