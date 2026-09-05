@@ -12,9 +12,7 @@ let loaderCompletionPath: string | null = null;
 const markReady = (pathname: string) => {
   if (loaderCompletionPath === pathname) return;
   loaderCompletionPath = pathname;
-  try {
-    sessionStorage.setItem(LOADER_READY_KEY, pathname);
-  } catch {}
+  try { sessionStorage.setItem(LOADER_READY_KEY, pathname); } catch {}
   window.dispatchEvent(new CustomEvent("wedding-loading-finished", { detail: { pathname } }));
 };
 
@@ -26,17 +24,15 @@ export default function PageLoadingOverlay() {
 
   useEffect(() => {
     let active = true;
-    getSiteSettings()
-      .then((settings) => {
-        if (!active) return;
-        setWedding(settings.wedding || {});
-        setSettingsReady(true);
-      })
-      .catch(() => {
-        if (!active) return;
-        setWedding({});
-        setSettingsReady(true);
-      });
+    getSiteSettings().then((settings) => {
+      if (!active) return;
+      setWedding(settings.wedding || {});
+      setSettingsReady(true);
+    }).catch(() => {
+      if (!active) return;
+      setWedding({});
+      setSettingsReady(true);
+    });
     return () => { active = false; };
   }, []);
 
@@ -44,19 +40,18 @@ export default function PageLoadingOverlay() {
     if (!settingsReady) return;
 
     const isHome = location.pathname === "/";
-    const eligible = isHome || wedding.loadingAllPages === true;
+    const enabled = wedding.loadingEnabled !== false;
+    const eligible = enabled && (isHome || wedding.loadingAllPages === true);
     const playMode = wedding.loadingPlayMode === "always" ? "always" : "once";
 
     if (!eligible) {
       setVisible(false);
-      loaderCompletionPath = null;
+      markReady(location.pathname);
       return;
     }
 
     let alreadyPlayed = false;
     try { alreadyPlayed = localStorage.getItem(LOADER_PLAYED_KEY) === "1"; } catch {}
-
-    // "Once" means once per browser. "Always" means every eligible page visit.
     if (playMode === "once" && alreadyPlayed) {
       setVisible(false);
       markReady(location.pathname);
@@ -70,9 +65,8 @@ export default function PageLoadingOverlay() {
       setVisible(false);
       markReady(location.pathname);
     }, duration);
-
     return () => window.clearTimeout(timer);
-  }, [location.pathname, location.search, settingsReady, wedding.loadingAllPages, wedding.loadingDuration, wedding.loadingPlayMode]);
+  }, [location.pathname, location.search, settingsReady, wedding.loadingEnabled, wedding.loadingAllPages, wedding.loadingDuration, wedding.loadingPlayMode]);
 
   const layout = wedding.loadingLayout === "horizontal" ? "flex-row" : "flex-col";
   const text1Size = Number(wedding.loadingTextSize || 30);
@@ -81,32 +75,11 @@ export default function PageLoadingOverlay() {
   return (
     <AnimatePresence>
       {visible && (
-        <motion.div
-          key="site-loader"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.55 }}
-          className="fixed inset-0 z-[12000] flex items-center justify-center bg-wedding-cream"
-          aria-label="Wedding opening"
-          role="status"
-        >
+        <motion.div key="site-loader" initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.55 }} className="fixed inset-0 z-[12000] flex items-center justify-center bg-wedding-cream" aria-label="Wedding opening" role="status">
           <div className={`loading-screen-content flex items-center justify-center gap-5 px-5 text-black ${layout}`}>
-            <p className="font-display text-center leading-tight" style={{ fontSize: `${text1Size}px` }}>
-              {wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}
-            </p>
-            {wedding.loadingHeartEnabled !== false && (
-              <motion.div
-                animate={{ scale: [1, 1.18, 1], opacity: [0.45, 1, 0.45] }}
-                transition={{ repeat: Infinity, duration: 1.15, ease: "easeInOut" }}
-                aria-hidden="true"
-              >
-                <Heart className="h-16 w-16 shrink-0 fill-primary/60 text-primary" />
-              </motion.div>
-            )}
-            <p className="font-display text-center leading-tight" style={{ fontSize: `${text2Size}px` }}>
-              {wedding.loadingText2 || "Made with love"}
-            </p>
+            <p className="font-display text-center leading-tight" style={{ fontSize: `${text1Size}px` }}>{wedding.loadingText || `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"}`}</p>
+            {wedding.loadingHeartEnabled !== false && <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.45, 1, 0.45] }} transition={{ repeat: Infinity, duration: 1.15, ease: "easeInOut" }} aria-hidden="true"><Heart className="h-16 w-16 shrink-0 fill-primary/60 text-primary" /></motion.div>}
+            <p className="font-display text-center leading-tight" style={{ fontSize: `${text2Size}px` }}>{wedding.loadingText2 || "Made with love"}</p>
           </div>
         </motion.div>
       )}
