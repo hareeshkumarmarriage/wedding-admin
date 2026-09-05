@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 const PAGE_SIZE = 60;
+const VIDEO_COUNT_PAGE_SIZE = 1000;
 const EVENT_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const FOLDER_RE = /^[A-Za-z0-9_-]{10,}$/;
 const REQUEST_TIMEOUT_MS = 8000;
@@ -106,7 +107,7 @@ export default async function handler(req, res) {
     const params = new URLSearchParams({
       q: `'${folderId}' in parents and trashed = false and mimeType contains '${type}'`,
       key: driveKey,
-      pageSize: String(PAGE_SIZE),
+      pageSize: String(type === "video/" ? VIDEO_COUNT_PAGE_SIZE : PAGE_SIZE),
       orderBy: "name_natural",
       fields: type === "image/"
         ? "nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink,webViewLink,resourceKey,imageMediaMetadata(width,height))"
