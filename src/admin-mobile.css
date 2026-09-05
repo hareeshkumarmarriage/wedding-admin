@@ -1,0 +1,130 @@
+/* Admin mobile layout hardening. CSS only: no DOM observers or runtime polling. */
+@media (max-width: 767px) {
+  html, body, #root { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+
+  body:has(.bg-muted\/20) {
+    min-height: 100dvh;
+  }
+
+  body:has(.bg-muted\/20) * {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  body:has(.bg-muted\/20) main,
+  body:has(.bg-muted\/20) section,
+  body:has(.bg-muted\/20) article,
+  body:has(.bg-muted\/20) form {
+    max-width: 100%;
+  }
+
+  body:has(.bg-muted\/20) table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  body:has(.bg-muted\/20) [class*="overflow-x-auto"] {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body:has(.bg-muted\/20) input,
+  body:has(.bg-muted\/20) textarea,
+  body:has(.bg-muted\/20) select {
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  body:has(.bg-muted\/20) textarea {
+    resize: vertical;
+  }
+
+  body:has(.bg-muted\/20) button,
+  body:has(.bg-muted\/20) a {
+    max-width: 100%;
+  }
+
+  body:has(.bg-muted\/20) header {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] > section {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100dvh;
+    border-radius: 1rem;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] nav {
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] main {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] footer > div:last-child {
+    width: 100%;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] footer button {
+    min-width: 0;
+  }
+
+  /* Prevent long URLs, IDs, emails and tokens from widening cards. */
+  body:has(.bg-muted\/20) p,
+  body:has(.bg-muted\/20) span,
+  body:has(.bg-muted\/20) label,
+  body:has(.bg-muted\/20) td,
+  body:has(.bg-muted\/20) th,
+  body:has(.bg-muted\/20) code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Keep dense action rows usable on phones. */
+  body:has(.bg-muted\/20) [class*="flex"] > button,
+  body:has(.bg-muted\/20) [class*="flex"] > a {
+    flex-shrink: 1;
+  }
+
+  /* Full-width dashboard content with comfortable phone gutters. */
+  body:has(.bg-muted\/20) .max-w-7xl,
+  body:has(.bg-muted\/20) .max-w-6xl,
+  body:has(.bg-muted\/20) .max-w-5xl,
+  body:has(.bg-muted\/20) .max-w-4xl {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  body:has(.bg-muted\/20) header {
+    gap: 0.375rem;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] {
+    padding: 0;
+  }
+
+  body:has(.bg-muted\/20) [role="dialog"] > section {
+    border-radius: 0;
+  }
+}
