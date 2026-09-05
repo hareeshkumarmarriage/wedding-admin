@@ -12,7 +12,8 @@ import PageLoadingOverlay from "./components/wedding/PageLoadingOverlay";
 
 const DriveGallery = lazy(() => import("./pages/DriveGallery.tsx"));
 const DriveVideos = lazy(() => import("./pages/DriveVideos.tsx"));
-const Admin = lazy(() => import("./pages/Admin.tsx"));
+const AdminPlatform = lazy(() => import("./pages/AdminPlatform.tsx"));
+const AdminLegacy = lazy(() => import("./pages/Admin.tsx"));
 const GuestUpload = lazy(() => import("./pages/GuestUpload.tsx"));
 
 const RouteFallback = () => (
@@ -35,7 +36,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/gallery" element={<PageAvailabilityGate page="gallery"><DriveGallery /></PageAvailabilityGate>} />
           <Route path="/videos" element={<PageAvailabilityGate page="videos"><DriveVideos /></PageAvailabilityGate>} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<AdminPlatform />} />
+          <Route path="/admin/legacy" element={<AdminLegacy />} />
           <Route path="/upload" element={<PageAvailabilityGate page="upload"><GuestUpload /></PageAvailabilityGate>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
