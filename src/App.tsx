@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,7 +13,6 @@ import PageLoadingOverlay from "./components/wedding/PageLoadingOverlay";
 const DriveGallery = lazy(() => import("./pages/DriveGallery.tsx"));
 const DriveVideos = lazy(() => import("./pages/DriveVideos.tsx"));
 const AdminEntry = lazy(() => import("./pages/AdminEntry.tsx"));
-const AdminLegacy = lazy(() => import("./pages/Admin.tsx"));
 const GuestUpload = lazy(() => import("./pages/GuestUpload.tsx"));
 
 const RouteFallback = () => (
@@ -37,8 +36,8 @@ const App = () => (
           <Route path="/gallery" element={<PageAvailabilityGate page="gallery"><DriveGallery /></PageAvailabilityGate>} />
           <Route path="/videos" element={<PageAvailabilityGate page="videos"><DriveVideos /></PageAvailabilityGate>} />
           <Route path="/admin" element={<AdminEntry />} />
-          <Route path="/admin/platform" element={<AdminEntry />} />
-          <Route path="/admin/legacy" element={<AdminLegacy />} />
+          <Route path="/admin/platform" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/legacy" element={<Navigate to="/admin" replace />} />
           <Route path="/upload" element={<PageAvailabilityGate page="upload"><GuestUpload /></PageAvailabilityGate>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
