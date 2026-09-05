@@ -54,6 +54,20 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("section");
+    if (!requested || !sections.length) return;
+    let attempts = 0;
+    const focus = () => {
+      attempts += 1;
+      const element = document.getElementById(requested);
+      if (element) { element.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+      if (attempts < 10) window.setTimeout(focus, 100);
+    };
+    const timer = window.setTimeout(focus, 150);
+    return () => window.clearTimeout(timer);
+  }, [sections]);
+
+  useEffect(() => {
     if (!settingsReady || wedding.introEnabled === false) return;
     let active = true;
     const readyKey = "wedding-loading-screen-ready-path-v1";
@@ -62,8 +76,6 @@ const Index = () => {
     const playEveryVisit = wedding.introVideoPlayMode === "always";
     const show = () => {
       if (!active) return;
-      // The play-mode setting is authoritative. Only suppress the overlay with
-      // sessionStorage when Admin selected Play once.
       if (!playEveryVisit) {
         try { if (sessionStorage.getItem(introShownKey) === "1") return; sessionStorage.setItem(introShownKey, "1"); } catch {}
       }
