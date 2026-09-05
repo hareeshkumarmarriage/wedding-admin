@@ -20,7 +20,16 @@ const ShareWedding = () => {
   useEffect(() => {
     getSiteSettings().then((settings) => {
       setWedding(settings.wedding || {});
-      setShare({ ...(settings.social || {}), position: settings.social?.position === "right" ? "right" : "left" });
+      const social = settings.social || {};
+      // Accept both the admin's friendly field names and the public component's
+      // URL names so saved social settings always reach the share menu.
+      setShare({
+        instagramUrl: social.instagramUrl || social.instagram || "https://www.instagram.com/pavan_kumar._.pk?igsi=MjJqcDhhajFmdGpw",
+        youtubeUrl: social.youtubeUrl || social.youtube || "https://wedding-admin-swart.vercel.app/",
+        facebookUrl: social.facebookUrl || social.facebook || "",
+        whatsappUrl: social.whatsappUrl || social.whatsapp || "",
+        position: social.position === "right" ? "right" : "left",
+      });
     }).catch(() => {});
   }, []);
 
