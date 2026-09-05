@@ -2,14 +2,26 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Facebook, Heart, Instagram, MessageCircle, Share2, X, Youtube } from "lucide-react";
 import { getSiteSettings } from "@/lib/supabaseData";
 
+type ShareSettings = {
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  facebookUrl?: string;
+  whatsappUrl?: string;
+  position?: "left" | "right";
+};
+
 const ShareWedding = () => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [wedding, setWedding] = useState<any>({});
+  const [share, setShare] = useState<ShareSettings>({ position: "left" });
   const url = typeof window !== "undefined" ? window.location.href.split("#")[0] : "";
 
   useEffect(() => {
-    getSiteSettings().then((settings) => setWedding(settings.wedding || {})).catch(() => {});
+    getSiteSettings().then((settings) => {
+      setWedding(settings.wedding || {});
+      setShare({ ...(settings.social || {}), position: settings.social?.position === "right" ? "right" : "left" });
+    }).catch(() => {});
   }, []);
 
   const title = `${wedding.groomName || "Hareesh"} & ${wedding.brideName || "Prasanna"} | Wedding`;
@@ -46,15 +58,17 @@ const ShareWedding = () => {
     { key: "youtubeUrl", label: "YouTube", icon: Youtube },
     { key: "facebookUrl", label: "Facebook", icon: Facebook },
     { key: "whatsappUrl", label: "WhatsApp", icon: MessageCircle },
-  ].filter((item) => wedding[item.key]);
+  ].filter((item) => share[item.key as keyof ShareSettings]);
 
-  return <div className="fixed bottom-5 left-5 z-40">
+  const positionClass = share.position === "right" ? "right-5" : "left-5";
+
+  return <div className={`fixed bottom-5 ${positionClass} z-40`}>
     {open && <div className="mb-3 w-72 max-w-[calc(100vw-2.5rem)] rounded-3xl border border-primary/10 bg-background/95 p-3 shadow-xl backdrop-blur" role="dialog" aria-label="Share wedding">
       <div className="mb-2 flex items-center justify-between px-2">
         <span className="font-display text-lg">Share Wedding</span>
         <button type="button" onClick={() => setOpen(false)} aria-label="Close share menu" className="rounded-full p-2 hover:bg-muted"><X size={15}/></button>
       </div>
-      <button type="button" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`, "_blank", "noopener,noreferrer")} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm hover:bg-primary/5">
+      <button type="button" onClick={() => openLink(share.whatsappUrl || `https://wa.me/?text=${encodeURIComponent(text + "\n" + url)}`)} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm hover:bg-primary/5">
         <span className="grid h-9 w-9 place-items-center rounded-full bg-green-100 text-green-700"><MessageCircle size={18}/></span>
         Share with WhatsApp
       </button>
@@ -62,7 +76,7 @@ const ShareWedding = () => {
       <button type="button" onClick={() => void copy()} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm hover:bg-primary/5">{copied ? <Check size={18} className="text-green-600"/> : <Copy size={18} className="text-primary"/>}{copied ? "Link copied" : "Copy link"}</button>
       {socialLinks.length > 0 && <div className="mt-2 border-t border-primary/10 pt-2">
         <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Follow us</p>
-        {socialLinks.map(({ key, label, icon: Icon }) => <button type="button" key={key} onClick={() => openLink(wedding[key])} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm hover:bg-primary/5"><Icon size={18} className="text-primary"/>{label}</button>)}
+        {socialLinks.map(({ key, label, icon: Icon }) => <button type="button" key={key} onClick={() => openLink(share[key as keyof ShareSettings])} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm hover:bg-primary/5"><Icon size={18} className="text-primary"/>{label}</button>)}
       </div>}
     </div>}
     <button type="button" onClick={() => setOpen((v) => !v)} aria-label="Share wedding" aria-expanded={open} className="flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm text-primary-foreground shadow-lg transition hover:scale-[1.02]"><Heart size={16} fill="currentColor"/>Share Wedding</button>
