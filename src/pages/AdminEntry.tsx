@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { LogIn, RefreshCw, Sparkles } from "lucide-react";
-import AdminControlCenter from "./AdminControlCenterV2";
+import AdminControlCenter from "./AdminControlCenterV3";
 import { supabaseAuthPassword } from "@/lib/supabase";
 
 const TOKEN_KEY = "wedding-admin-access-token";
