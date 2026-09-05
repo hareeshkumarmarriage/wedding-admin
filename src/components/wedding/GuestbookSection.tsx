@@ -4,100 +4,20 @@ import { motion } from "framer-motion";
 import { addGuestbookMessage, getGuestbookMessages, type GuestbookMessage as LocalMessage } from "@/lib/weddingStorage";
 import { getSiteSettings, isSupabaseConfigured, submitGuestbook } from "@/lib/supabaseData";
 
-type WeddingSettings = {
-  featuredGuestbookCount?: number;
-  guestbookHeading?: string;
-  guestbookDescription?: string;
-};
+type WeddingSettings = { featuredGuestbookCount?: number; guestbookHeading?: string; guestbookDescription?: string; guestbookEnabled?: boolean; guestbookAllowSubmission?: boolean; guestbookShowMessages?: boolean; guestbookShowDates?: boolean; guestbookShowViewAll?: boolean; guestbookMaxMessages?: number; };
 
 const GuestbookSection = () => {
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<LocalMessage[]>(() => getGuestbookMessages());
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [website, setWebsite] = useState("");
-  const [featuredLimit, setFeaturedLimit] = useState(6);
-  const [content, setContent] = useState<WeddingSettings>({});
-
-  const recentMessages = useMemo(() => messages.slice(0, featuredLimit), [messages, featuredLimit]);
-
-  useEffect(() => {
-    if (isSupabaseConfigured) {
-      fetch("/api/guestbook?limit=30", { cache: "no-store" })
-        .then(async (response) => {
-          if (!response.ok) throw new Error("Unable to load guestbook.");
-          return response.json();
-        })
-        .then((items) => setMessages(items.map((item: any) => ({ id: item.id, name: item.name, message: item.message, createdAt: item.created_at }))));
-    }
-    getSiteSettings().then((settings) => {
-      const wedding = settings.wedding as WeddingSettings | undefined;
-      setContent(wedding || {});
-      const count = Number(wedding?.featuredGuestbookCount);
-      if (Number.isFinite(count) && count >= 3 && count <= 6) setFeaturedLimit(count);
-    }).catch(() => {});
-  }, []);
-
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    const cleanName = name.trim();
-    const cleanMessage = message.trim();
-    if (!cleanName || !cleanMessage || cleanName.length > 80 || cleanMessage.length > 500) {
-      setError("Please enter your name and a message within the allowed length.");
-      return;
-    }
-    if (website) { setSent(true); return; }
-    const cooldownKey = "wedding-guestbook-last-submit";
-    const lastSubmit = Number(localStorage.getItem(cooldownKey) || 0);
-    if (Date.now() - lastSubmit < 30_000) { setError("Please wait a few seconds before sending another message."); return; }
-    setSaving(true); setError("");
-    try {
-      if (isSupabaseConfigured) {
-        await submitGuestbook(cleanName, cleanMessage, website);
-        localStorage.setItem(cooldownKey, String(Date.now()));
-      } else {
-        const item = addGuestbookMessage(cleanName, cleanMessage);
-        setMessages((current) => [item, ...current].slice(0, 100));
-      }
-      setName(""); setMessage(""); setSent(true);
-      window.setTimeout(() => setSent(false), 3000);
-    } catch (e) { setError(e instanceof Error ? e.message : "We couldn't send your message right now."); }
-    finally { setSaving(false); }
-  };
-
-  return (
-    <section id="guestbook" className="bg-wedding-cream py-20 md:py-28">
-      <div className="wedding-container">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="section-subtitle">A Note From You</p>
-          <h2 className="section-title mt-2">{content.guestbookHeading || "Guestbook"}</h2>
-          <p className="mt-4 font-accent text-lg text-muted-foreground">{content.guestbookDescription || "Leave a little love and a message for us to remember."}</p>
-        </div>
-        <div className="mx-auto mt-10 grid max-w-6xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <motion.form onSubmit={submit} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-3xl border border-primary/10 bg-white/75 p-6 shadow-sm md:p-8">
-            <div className="mb-5 flex items-center gap-2 text-primary"><Heart size={18} fill="currentColor" /><span className="font-body text-xs uppercase tracking-[0.18em]">Send your wishes</span></div>
-            <label htmlFor="guestbook-name" className="block text-left text-sm font-medium">Name</label>
-            <input id="guestbook-name" type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoComplete="name" placeholder="Your name" className="mt-2 h-12 w-full rounded-2xl border border-primary/15 bg-white px-4 outline-none focus:border-primary" />
-            <label htmlFor="guestbook-message" className="mt-5 block text-left text-sm font-medium">Message</label>
-            <textarea id="guestbook-message" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} rows={6} placeholder="Write something beautiful…" className="mt-2 w-full rounded-2xl border border-primary/15 bg-white p-4 outline-none focus:border-primary" />
-            <div className="hidden" aria-hidden="true"><label htmlFor="website">Website</label><input id="website" value={website} onChange={(e) => setWebsite(e.target.value)} tabIndex={-1} autoComplete="off" /></div>
-            {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</p>}
-            {sent && <p role="status" className="mt-3 rounded-xl bg-green-50 p-3 text-sm text-green-700">Thank you! Your wish has been received.</p>}
-            <button disabled={saving} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground disabled:opacity-60"><Send size={16} />{saving ? "Sending…" : "Send your wish"}</button>
-          </motion.form>
-
-          <div>
-            <div className="mb-4 flex items-center justify-between"><div><p className="font-body text-xs uppercase tracking-[0.2em] text-primary">From our loved ones</p><h3 className="mt-1 font-display text-2xl">Beautiful wishes</h3></div><Sparkles className="text-primary/60" size={22} /></div>
-            {recentMessages.length === 0 ? <div className="rounded-3xl border border-primary/10 bg-white/60 p-8 text-center text-sm text-muted-foreground">Be the first to leave a wish. ❤️</div> : <div className="grid gap-4 sm:grid-cols-2">
-              {recentMessages.map((item) => <motion.article key={item.id} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-3xl border border-primary/10 bg-white/75 p-5 shadow-sm"><div className="flex items-center gap-2 text-primary"><Heart size={15} fill="currentColor" /><span className="font-display text-lg">{item.name}</span></div><p className="mt-3 font-accent text-base leading-relaxed text-foreground/80">“{item.message}”</p><time className="mt-4 block text-right text-[11px] uppercase tracking-wider text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</time></motion.article>)}
-            </div>}
-            <a href="#guestbook" className="mt-5 inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary hover:underline">View all wishes <span aria-hidden="true">→</span></a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+  const [name,setName]=useState(""); const [message,setMessage]=useState(""); const [messages,setMessages]=useState<LocalMessage[]>(()=>getGuestbookMessages()); const [sent,setSent]=useState(false); const [error,setError]=useState(""); const [saving,setSaving]=useState(false); const [website,setWebsite]=useState(""); const [featuredLimit,setFeaturedLimit]=useState(6); const [content,setContent]=useState<WeddingSettings>({});
+  useEffect(()=>{ if(isSupabaseConfigured){fetch("/api/guestbook?limit=30",{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Unable to load guestbook.");return r.json()}).then(items=>setMessages(items.map((item:any)=>({id:item.id,name:item.name,message:item.message,createdAt:item.created_at})))).catch(()=>{}); } getSiteSettings().then(settings=>{const wedding=settings.wedding as WeddingSettings|undefined;setContent(wedding||{});const count=Number(wedding?.featuredGuestbookCount);if(Number.isFinite(count)&&count>=3&&count<=10)setFeaturedLimit(count);}).catch(()=>{});},[]);
+  const recentMessages=useMemo(()=>messages.slice(0,featuredLimit),[messages,featuredLimit]);
+  if(content.guestbookEnabled===false)return null;
+  const allowSubmission=content.guestbookAllowSubmission!==false; const showMessages=content.guestbookShowMessages!==false; const showDates=content.guestbookShowDates!==false; const showViewAll=content.guestbookShowViewAll!==false; const maxMessages=Math.min(10,Math.max(3,Number(content.guestbookMaxMessages||featuredLimit||6)));
+  const submit=async(event:FormEvent)=>{event.preventDefault();const cleanName=name.trim(),cleanMessage=message.trim();if(!cleanName||!cleanMessage||cleanName.length>80||cleanMessage.length>500){setError("Please enter your name and a message within the allowed length.");return;}if(website){setSent(true);return;}const cooldownKey="wedding-guestbook-last-submit",lastSubmit=Number(localStorage.getItem(cooldownKey)||0);if(Date.now()-lastSubmit<30000){setError("Please wait a few seconds before sending another message.");return;}setSaving(true);setError("");try{if(isSupabaseConfigured){await submitGuestbook(cleanName,cleanMessage,website);localStorage.setItem(cooldownKey,String(Date.now()));}else{const item=addGuestbookMessage(cleanName,cleanMessage);setMessages(current=>[item,...current].slice(0,100));}setName("");setMessage("");setSent(true);window.setTimeout(()=>setSent(false),3000);}catch(e){setError(e instanceof Error?e.message:"We couldn't send your message right now.");}finally{setSaving(false);}};
+  return <section id="guestbook" className="bg-wedding-cream py-20 md:py-28"><div className="wedding-container"><div className="mx-auto max-w-3xl text-center"><p className="section-subtitle">A Note From You</p><h2 className="section-title mt-2">{content.guestbookHeading||"Guestbook"}</h2><p className="mt-4 font-accent text-lg text-muted-foreground">{content.guestbookDescription||"Leave a little love and a message for us to remember."}</p></div>
+    <div className={`mx-auto mt-10 grid max-w-6xl gap-8 ${allowSubmission&&showMessages?"lg:grid-cols-[0.8fr_1.2fr]":"lg:max-w-3xl"}`}>
+      {allowSubmission&&<motion.form onSubmit={submit} initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} className="rounded-3xl border border-primary/10 bg-white/75 p-6 shadow-sm md:p-8"><div className="mb-5 flex items-center gap-2 text-primary"><Heart size={18} fill="currentColor"/><span className="font-body text-xs uppercase tracking-[0.18em]">Send your wishes</span></div><label htmlFor="guestbook-name" className="block text-left text-sm font-medium">Name</label><input id="guestbook-name" type="text" value={name} onChange={e=>setName(e.target.value)} maxLength={80} autoComplete="name" placeholder="Your name" className="mt-2 h-12 w-full rounded-2xl border border-primary/15 bg-white px-4 outline-none focus:border-primary"/><label htmlFor="guestbook-message" className="mt-5 block text-left text-sm font-medium">Message</label><textarea id="guestbook-message" value={message} onChange={e=>setMessage(e.target.value)} maxLength={500} rows={6} placeholder="Write something beautiful…" className="mt-2 w-full rounded-2xl border border-primary/15 bg-white p-4 outline-none focus:border-primary"/><div className="hidden" aria-hidden="true"><label htmlFor="website">Website</label><input id="website" value={website} onChange={e=>setWebsite(e.target.value)} tabIndex={-1} autoComplete="off"/></div>{error&&<p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</p>}{sent&&<p role="status" className="mt-3 rounded-xl bg-green-50 p-3 text-sm text-green-700">Thank you! Your wish has been received.</p>}<button disabled={saving} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground disabled:opacity-60"><Send size={16}/>{saving?"Sending…":"Send your wish"}</button></motion.form>}
+      {showMessages&&<div><div className="mb-4 flex items-center justify-between"><div><p className="font-body text-xs uppercase tracking-[0.2em] text-primary">From our loved ones</p><h3 className="mt-1 font-display text-2xl">Beautiful wishes</h3></div><Sparkles className="text-primary/60" size={22}/></div>{recentMessages.length===0?<div className="rounded-3xl border border-primary/10 bg-white/60 p-8 text-center text-sm text-muted-foreground">Be the first to leave a wish. ❤️</div>:<div className="grid gap-4 sm:grid-cols-2">{recentMessages.slice(0,maxMessages).map(item=><motion.article key={item.id} initial={{opacity:0,y:12}} whileInView={{opacity:1,y:0}} viewport={{once:true}} className="rounded-3xl border border-primary/10 bg-white/75 p-5 shadow-sm"><div className="flex items-center gap-2 text-primary"><Heart size={15} fill="currentColor"/><span className="font-display text-lg">{item.name}</span></div><p className="mt-3 font-accent text-base leading-relaxed text-foreground/80">“{item.message}”</p>{showDates&&<time className="mt-4 block text-right text-[11px] uppercase tracking-wider text-muted-foreground">{new Date(item.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}</time>}</motion.article>)}</div>}{showViewAll&&<a href="#guestbook" className="mt-5 inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary hover:underline">View all wishes <span aria-hidden="true">→</span></a>}</div>}
+    </div>
+  </div></section>;
 };
 export default GuestbookSection;
