@@ -33,9 +33,7 @@ export default function GlobalFullscreenButton() {
         unlockOrientationIfPossible();
         return;
       }
-
       await document.documentElement.requestFullscreen();
-      // Keep the wedding site fullscreen in portrait on mobile; never request landscape.
       await lockPortraitIfPossible();
     } catch {
       // Fullscreen can be unavailable in some embedded browsers.
@@ -48,9 +46,30 @@ export default function GlobalFullscreenButton() {
       onClick={() => void toggleFullscreen()}
       aria-label={isFullscreen ? "Exit fullscreen" : "View website in fullscreen"}
       title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-      className="fixed bottom-5 right-5 z-[10000] flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-white/85 text-foreground shadow-xl backdrop-blur-md transition hover:scale-105 hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary/50 sm:bottom-7 sm:right-7"
+      className="wedding-fullscreen-control"
+      style={{
+        position: "fixed",
+        top: "auto",
+        right: "16px",
+        bottom: "16px",
+        left: "auto",
+        width: "40px",
+        minWidth: "40px",
+        maxWidth: "40px",
+        height: "40px",
+        minHeight: "40px",
+        maxHeight: "40px",
+        padding: 0,
+        margin: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "9999px",
+        zIndex: 10000,
+        boxSizing: "border-box",
+      }}
     >
-      {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+      {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
     </button>
   );
 }
