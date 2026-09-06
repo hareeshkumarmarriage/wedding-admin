@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&family=Josefin+Sans:wght@300;400;500&family=Lato:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;500;600&family=Montserrat:wght@400;500;600&family=Open+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@400;500;600&family=Raleway:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&family=Josefin+Sans:wght@300;400;500&family=Lato:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;500;600&family=Montserrat:wght@400;500;600&family=Open+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@400;500;600&family=Raleway:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,139 +6,31 @@
 
 @layer base {
   :root {
-    --background: 30 25% 97%;
-    --foreground: 340 10% 20%;
-
-    --card: 30 30% 95%;
-    --card-foreground: 340 10% 20%;
-
-    --popover: 30 25% 97%;
-    --popover-foreground: 340 10% 20%;
-
-    --primary: 330 30% 55%;
-    --primary-foreground: 30 25% 97%;
-
-    --secondary: 30 20% 90%;
-    --secondary-foreground: 340 10% 25%;
-
-    --muted: 30 15% 92%;
-    --muted-foreground: 340 8% 45%;
-
-    --accent: 330 25% 75%;
-    --accent-foreground: 340 10% 15%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 330 15% 85%;
-    --input: 330 15% 85%;
-    --ring: 330 30% 55%;
-
-    --radius: 0.5rem;
-
-    --wedding-rose: 330 30% 55%;
-    --wedding-blush: 330 25% 90%;
-    --wedding-cream: 35 30% 95%;
-    --wedding-gold: 38 60% 55%;
-    --wedding-sage: 150 15% 60%;
-    --wedding-mauve: 300 12% 70%;
-    --wedding-dark: 340 10% 20%;
-
-    --font-display: 'Playfair Display', serif;
-    --font-body: 'Josefin Sans', sans-serif;
-    --font-accent: 'Cormorant Garamond', serif;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 30 25% 97%; --foreground: 340 10% 20%; --card: 30 30% 95%; --card-foreground: 340 10% 20%;
+    --popover: 30 25% 97%; --popover-foreground: 340 10% 20%; --primary: 330 30% 55%; --primary-foreground: 30 25% 97%;
+    --secondary: 30 20% 90%; --secondary-foreground: 340 10% 25%; --muted: 30 15% 92%; --muted-foreground: 340 8% 45%;
+    --accent: 330 25% 75%; --accent-foreground: 340 10% 15%; --destructive: 0 84.2% 60.2%; --destructive-foreground: 210 40% 98%;
+    --border: 330 15% 85%; --input: 330 15% 85%; --ring: 330 30% 55%; --radius: 0.5rem;
+    --wedding-rose: 330 30% 55%; --wedding-blush: 330 25% 90%; --wedding-cream: 35 30% 95%; --wedding-gold: 38 60% 55%; --wedding-sage: 150 15% 60%; --wedding-mauve: 300 12% 70%; --wedding-dark: 340 10% 20%;
+    --font-display: 'Playfair Display', serif; --font-body: 'Josefin Sans', sans-serif; --font-accent: 'Cormorant Garamond', serif;
+    --sidebar-background: 0 0% 98%; --sidebar-foreground: 240 5.3% 26.1%; --sidebar-primary: 240 5.9% 10%; --sidebar-primary-foreground: 0 0% 98%; --sidebar-accent: 240 4.8% 95.9%; --sidebar-accent-foreground: 240 5.9% 10%; --sidebar-border: 220 13% 91%; --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+@layer base { * { @apply border-border; } body { @apply bg-background text-foreground; font-family: var(--font-body); } h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); } }
+@layer components { .section-subtitle { font-family: var(--font-accent); @apply text-primary tracking-[0.3em] uppercase text-sm font-light; } .section-title { font-family: var(--font-display); @apply text-foreground tracking-[0.15em] text-3xl md:text-4xl font-medium; } .wedding-container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; } }
+@layer utilities { .letter-spacing-wide { letter-spacing: 0.3em; } }
+html { scroll-behavior: smooth; } body { overflow-x: hidden; } button,a,input,textarea,select { -webkit-tap-highlight-color: transparent; }
+@media (max-width:640px) { .section-title { line-height:1.08; } .section-subtitle { letter-spacing:.14em; } input,textarea,select,button { font-size:16px; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
+html[data-heading-font="Playfair Display"] { --font-display:'Playfair Display',serif; } html[data-heading-font="Cormorant Garamond"] { --font-display:'Cormorant Garamond',serif; } html[data-heading-font="DM Serif Display"] { --font-display:'DM Serif Display',serif; } html[data-heading-font="Libre Baskerville"] { --font-display:'Libre Baskerville',serif; } html[data-heading-font="Cinzel"] { --font-display:'Cinzel',serif; } html[data-heading-font="Lora"] { --font-display:'Lora',serif; } html[data-heading-font="Montserrat"] { --font-display:'Montserrat',sans-serif; }
+html[data-body-font="Josefin Sans"] { --font-body:'Josefin Sans',sans-serif; } html[data-body-font="Montserrat"] { --font-body:'Montserrat',sans-serif; } html[data-body-font="Poppins"] { --font-body:'Poppins',sans-serif; } html[data-body-font="Lato"] { --font-body:'Lato',sans-serif; } html[data-body-font="Raleway"] { --font-body:'Raleway',sans-serif; } html[data-body-font="Open Sans"] { --font-body:'Open Sans',sans-serif; } html[data-body-font="Inter"] { --font-body:'Inter',sans-serif; }
+.intro-video-mobile-portrait { width:100vh!important; height:100vw!important; max-width:none!important; max-height:none!important; left:50%!important; top:50%!important; right:auto!important; bottom:auto!important; transform:translate(-50%,-50%) rotate(90deg)!important; object-fit:cover!important; }
+@media (min-width:641px) { .intro-video-mobile-portrait { width:100%!important; height:100%!important; left:0!important; top:0!important; transform:none!important; } }
+.dark { --background:340 10% 12%; --foreground:30 25% 96%; --card:340 10% 16%; --card-foreground:30 25% 96%; --popover:340 10% 16%; --popover-foreground:30 25% 96%; --muted:340 8% 22%; --muted-foreground:30 10% 72%; --border:340 8% 28%; --input:340 8% 28%; }
+html[data-theme="gold"] { --primary:38 60% 50%; --ring:38 60% 50%; --accent:38 45% 70%; } html[data-theme="sage"] { --primary:150 22% 42%; --ring:150 22% 42%; --accent:150 18% 68%; } html[data-theme="blush"] { --primary:350 55% 68%; --ring:350 55% 68%; --accent:350 45% 82%; } html[data-theme="mauve"] { --primary:300 22% 52%; --ring:300 22% 52%; --accent:300 18% 72%; } html[data-theme="terracotta"] { --primary:15 58% 48%; --ring:15 58% 48%; --accent:15 45% 70%; } html[data-theme="lavender"] { --primary:265 38% 58%; --ring:265 38% 58%; --accent:265 30% 76%; } html[data-theme="navy"] { --primary:220 42% 35%; --ring:220 42% 35%; --accent:220 30% 68%; }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-body);
-  }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-  }
-}
-
-@layer components {
-  .section-subtitle {
-    font-family: var(--font-accent);
-    @apply text-primary tracking-[0.3em] uppercase text-sm font-light;
-  }
-  .section-title {
-    font-family: var(--font-display);
-    @apply text-foreground tracking-[0.15em] text-3xl md:text-4xl font-medium;
-  }
-  .wedding-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-}
-
-@layer utilities {
-  .letter-spacing-wide {
-    letter-spacing: 0.3em;
-  }
-}
-
-/* Mobile-first wedding polish */
-html { scroll-behavior: smooth; }
-body { overflow-x: hidden; }
-button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
-@media (max-width: 640px) {
-  .section-title { line-height: 1.08; }
-  .section-subtitle { letter-spacing: .14em; }
-  input, textarea, select, button { font-size: 16px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
-html[data-heading-font="Playfair Display"] { --font-display: 'Playfair Display', serif; }
-html[data-heading-font="Cormorant Garamond"] { --font-display: 'Cormorant Garamond', serif; }
-html[data-heading-font="DM Serif Display"] { --font-display: 'DM Serif Display', serif; }
-html[data-heading-font="Libre Baskerville"] { --font-display: 'Libre Baskerville', serif; }
-html[data-heading-font="Cinzel"] { --font-display: 'Cinzel', serif; }
-html[data-heading-font="Lora"] { --font-display: 'Lora', serif; }
-html[data-heading-font="Montserrat"] { --font-display: 'Montserrat', sans-serif; }
-
-html[data-body-font="Josefin Sans"] { --font-body: 'Josefin Sans', sans-serif; }
-html[data-body-font="Montserrat"] { --font-body: 'Montserrat', sans-serif; }
-html[data-body-font="Poppins"] { --font-body: 'Poppins', sans-serif; }
-html[data-body-font="Lato"] { --font-body: 'Lato', sans-serif; }
-html[data-body-font="Raleway"] { --font-body: 'Raleway', sans-serif; }
-html[data-body-font="Open Sans"] { --font-body: 'Open Sans', sans-serif; }
-html[data-body-font="Inter"] { --font-body: 'Inter', sans-serif; }
-
-.intro-video-mobile-portrait { width: 100vh !important; height: 100vw !important; max-width: none !important; max-height: none !important; left: 50% !important; top: 50% !important; right: auto !important; bottom: auto !important; transform: translate(-50%, -50%) rotate(90deg) !important; object-fit: cover !important; }
-@media (min-width: 641px) { .intro-video-mobile-portrait { width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; transform: none !important; } }
-
-.dark {
-  --background: 340 10% 12%;
-  --foreground: 30 25% 96%;
-  --card: 340 10% 16%;
-  --card-foreground: 30 25% 96%;
-  --popover: 340 10% 16%;
-  --popover-foreground: 30 25% 96%;
-  --muted: 340 8% 22%;
-  --muted-foreground: 30 10% 72%;
-  --border: 340 8% 28%;
-  --input: 340 8% 28%;
-}
-html[data-theme="gold"] { --primary: 38 60% 50%; --ring: 38 60% 50%; --accent: 38 45% 70%; }
-html[data-theme="sage"] { --primary: 150 22% 42%; --ring: 150 22% 42%; --accent: 150 18% 68%; }
-html[data-theme="blush"] { --primary: 350 55% 68%; --ring: 350 55% 68%; --accent: 350 45% 82%; }
-html[data-theme="mauve"] { --primary: 300 22% 52%; --ring: 300 22% 52%; --accent: 300 18% 72%; }
-html[data-theme="terracotta"] { --primary: 15 58% 48%; --ring: 15 58% 48%; --accent: 15 45% 70%; }
-html[data-theme="lavender"] { --primary: 265 38% 58%; --ring: 265 38% 58%; --accent: 265 30% 76%; }
-html[data-theme="navy"] { --primary: 220 42% 35%; --ring: 220 42% 35%; --accent: 220 30% 68%; }
+/* Admin action feedback: keep operation results visible above the mobile keyboard and sticky header. */
+.admin-feedback-toast { position:fixed!important; top:5.25rem!important; right:1rem!important; bottom:auto!important; z-index:9999!important; width:min(28rem,calc(100vw - 2rem)); }
+@media (max-width:640px) { .admin-feedback-toast { top:4.75rem!important; right:.75rem!important; width:calc(100vw - 1.5rem); } }
+.admin-feedback-toast { animation:admin-feedback-in .18s ease-out; }
+@keyframes admin-feedback-in { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
