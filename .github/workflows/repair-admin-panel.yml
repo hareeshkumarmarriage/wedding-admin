@@ -1,0 +1,39 @@
+name: Repair admin panel JSX
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair AdminControlCenterV5
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/pages/AdminControlCenterV5.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = '''<Card title="System health"><div className="grid gap-3 md:grid-cols-2">{health.map(h=><div key={h.label} className="rounded-xl border p-3"><b>{h.label}</b><div className="text-xs text-muted-foreground">{h.detail}</div></div>)}</Card></div>}'''
+          new = '''<Card title="System health"><div className="grid gap-3 md:grid-cols-2">{health.map(h=><div key={h.label} className="rounded-xl border p-3"><b>{h.label}</b><div className="text-xs text-muted-foreground">{h.detail}</div></div>)}</div></Card></div>}'''
+          if old in s:
+              s = s.replace(old, new, 1)
+          header = '''<button type="button" onClick={()=>void toggleFullscreen()} aria-label={fullscreen?"Exit fullscreen":"Enter fullscreen"} title={fullscreen?"Exit fullscreen":"Enter fullscreen"} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background hover:bg-muted">{fullscreen?<Minimize2 size={17}/>:<Maximize2 size={17}/>}</button>'''
+          s = s.replace(header, '', 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Build check
+        run: |
+          npm ci
+          npm run build
+      - name: Commit repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/pages/AdminControlCenterV5.tsx
+          git diff --cached --quiet || git commit -m "fix: repair admin panel and keep fullscreen control at bottom"
+          git push
