@@ -59,6 +59,26 @@
     height: 15px;
   }
 
+  /* Preview + Publish: keep the real buttons/actions, but show only their icons on phones. */
+  header.sticky.top-0 > div > button:nth-of-type(3),
+  header.sticky.top-0 > div > button:nth-of-type(4) {
+    font-size: 0;
+    line-height: 0;
+    gap: 0;
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    padding: 0;
+  }
+
+  header.sticky.top-0 > div > button:nth-of-type(3) svg,
+  header.sticky.top-0 > div > button:nth-of-type(4) svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+  }
+
   /* Desktop search is intentionally removed from the compact phone header. */
   header.sticky.top-0 input {
     display: none;
@@ -100,6 +120,17 @@
 
   header.sticky.top-0 > div > button:nth-of-type(2) {
     max-width: 130px;
+  }
+
+  header.sticky.top-0 > div > button:nth-of-type(3),
+  header.sticky.top-0 > div > button:nth-of-type(4) {
+    flex-basis: 38px;
+    width: 38px;
+    min-width: 38px;
+    max-width: 38px;
+    height: 38px;
+    min-height: 38px;
+    max-height: 38px;
   }
 }
 
