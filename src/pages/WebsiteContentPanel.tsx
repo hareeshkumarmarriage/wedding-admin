@@ -48,17 +48,68 @@ function DriveImageField({ label, value, onChange, help }: { label: string; valu
   </div>;
 }
 
+const WEDDING_ALIASES: Record<string, string[]> = {
+  groomName: ["groomName", "groom_name"],
+  brideName: ["brideName", "bride_name"],
+  heroTitle: ["heroTitle", "hero_title"],
+  description: ["description", "hero_description"],
+  heroSubtitle: ["heroSubtitle", "hero_subtitle"],
+  date: ["date", "weddingDate", "wedding_date"],
+  time: ["time", "weddingTime", "wedding_time"],
+  timezone: ["timezone", "time_zone"],
+  countdownEnabled: ["countdownEnabled", "countdown_enabled"],
+  heroImageDriveId: ["heroImageDriveId", "hero_image_drive_id", "coverImageDriveId", "cover_image_drive_id", "cover_image"],
+  groomImageDriveId: ["groomImageDriveId", "groom_image_drive_id", "groom_image_id"],
+  brideImageDriveId: ["brideImageDriveId", "bride_image_drive_id", "bride_image_id"],
+  groomImagePosition: ["groomImagePosition", "groom_image_position"],
+  brideImagePosition: ["brideImagePosition", "bride_image_position"],
+  shareEnabled: ["shareEnabled", "share_enabled"],
+  sharePosition: ["sharePosition", "share_position"],
+  storyTitle: ["storyTitle", "story_title"],
+  storyDescription: ["storyDescription", "story_description"],
+  galleryHeading: ["galleryHeading", "gallery_heading"],
+  galleryDescription: ["galleryDescription", "gallery_description"],
+};
+
+function normalizeWeddingSettings(raw: any): Settings {
+  const source = raw && typeof raw === "object" ? raw : {};
+  const next: Settings = { ...defaults, ...source };
+  for (const [canonical, aliases] of Object.entries(WEDDING_ALIASES)) {
+    const found = aliases.map((key) => source[key]).find((value) => value !== undefined && value !== null && String(value).trim() !== "");
+    if (found !== undefined) next[canonical] = found;
+  }
+  return next;
+}
+
+function weddingForSave(draft: Settings, existing: Settings): Settings {
+  const next: Settings = { ...existing, ...draft };
+  const mappings: Record<string, string[]> = {
+    groomName: ["groom_name"], brideName: ["bride_name"], heroTitle: ["hero_title"],
+    description: ["hero_description"], heroSubtitle: ["hero_subtitle"], date: ["wedding_date"],
+    time: ["wedding_time"], countdownEnabled: ["countdown_enabled"],
+    heroImageDriveId: ["hero_image_drive_id", "cover_image_drive_id"],
+    groomImageDriveId: ["groom_image_drive_id"], brideImageDriveId: ["bride_image_drive_id"],
+    groomImagePosition: ["groom_image_position"], brideImagePosition: ["bride_image_position"],
+    shareEnabled: ["share_enabled"], sharePosition: ["share_position"], storyTitle: ["story_title"],
+    storyDescription: ["story_description"], galleryHeading: ["gallery_heading"], galleryDescription: ["gallery_description"],
+  };
+  for (const [canonical, aliases] of Object.entries(mappings)) {
+    for (const alias of aliases) next[alias] = draft[canonical];
+  }
+  return next;
+}
+
 export default function WebsiteContentPanel({ child, token, settings, setSettings, notify }: { child: Child; token: string; settings: Settings; setSettings: (v: any) => void; notify: (message: string) => void }) {
-  const [draft, setDraft] = useState<Settings>({ ...defaults, ...(settings.wedding || {}) });
+  const [draft, setDraft] = useState<Settings>(() => normalizeWeddingSettings(settings.wedding || settings));
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  useEffect(() => { setDraft({ ...defaults, ...(settings.wedding || {}) }); setDirty(false); }, [settings.wedding]);
+  useEffect(() => { setDraft(normalizeWeddingSettings(settings.wedding || settings)); setDirty(false); }, [settings.wedding]);
   const set = (key: string, value: any) => { setDraft((d) => ({ ...d, [key]: value })); setDirty(true); };
   const save = async () => {
     if (!token) return notify("Admin session is missing.");
     setSaving(true);
     try {
-      const next = { ...defaults, ...(settings.wedding || {}), ...draft, rsvpMaxGuests: Math.min(10, Math.max(1, Number(draft.rsvpMaxGuests || 8))) };
+      const next = weddingForSave({ ...draft, rsvpMaxGuests: Math.min(10, Math.max(1, Number(draft.rsvpMaxGuests || 8))) }, (settings.wedding && typeof settings.wedding === "object") ? settings.wedding : {});
       await saveSiteSetting(token, "wedding", next);
       setSettings((s: Settings) => ({ ...s, wedding: next }));
       await writeAdminAudit(token, "update_settings", "wedding", { panel: `website.${child}`, workflow: "draft" });
@@ -66,7 +117,7 @@ export default function WebsiteContentPanel({ child, token, settings, setSetting
     } catch (error) { notify(error instanceof Error ? error.message : "Unable to save website settings."); }
     finally { setSaving(false); }
   };
-  const reset = () => { setDraft({ ...defaults, ...(settings.wedding || {}) }); setDirty(false); };
+  const reset = () => { setDraft(normalizeWeddingSettings(settings.wedding || settings)); setDirty(false); };
   const preview = async () => {
     try {
       const response = await fetch("/api/admin-advanced?action=draft", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ label: `Preview ${child} ${new Date().toLocaleString()}` }) });
