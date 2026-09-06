@@ -1,0 +1,43 @@
+name: Fix Website Navigation Selection
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Fix selection logic
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('src/pages/AdminControlCenterV5.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = 'const websiteChildren=useMemo(()=>{if(active!=="website")return current.children;const enabled=sections.filter(s=>Boolean(s.enabled)&&SECTION_TO_CHILD[s.key]).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0)).map(s=>({id:SECTION_TO_CHILD[s.key],label:s.label||title(SECTION_TO_CHILD[s.key])}));return [{id:"section-manager",label:"section manager"},...enabled,{id:"navigation",label:"navigation"}].filter((x,i,a)=>a.findIndex(y=>y.id===x.id)===i)},[active,current.children,sections]);'
+          new = 'const websiteChildren=useMemo(()=>active==="website"?current.children:current.children,[active,current.children]);'
+          if old not in s:
+              raise SystemExit('Expected website navigation selection block was not found; no change made.')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+      - name: Verify build
+        run: |
+          npm ci
+          npm run build
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/AdminControlCenterV5.tsx
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Fix website navigation panel selection"
+            git push origin main
+          fi
