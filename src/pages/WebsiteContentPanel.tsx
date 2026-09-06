@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Eye, RefreshCw } from "lucide-react";
 import { saveSiteSetting, writeAdminAudit } from "@/lib/supabaseData";
 
@@ -64,14 +64,14 @@ const groups: Record<Child, { title: string; description: string; fields: { key:
     { key: "description", label: "Hero description", type: "textarea" },
     { key: "heroSubtitle", label: "Hero subtitle" },
     { key: "date", label: "Wedding date", type: "date" },
-    { key: "time", label: "Wedding time", type: "time", help: "Example: 08:59 AM" },
+    { key: "time", label: "Wedding time", type: "text", help: "Use 24-hour time or AM/PM, for example 08:59 AM." },
     { key: "timezone", label: "Timezone", type: "select", options: ["Asia/Kolkata", "UTC", "Asia/Dubai", "Asia/Singapore"] },
     { key: "countdownEnabled", label: "Show countdown", type: "toggle" },
     { key: "heroImageDriveId", label: "Hero image Google Drive ID", help: "Paste only the Drive file ID. Leave empty to use the built-in fallback image." },
     { key: "shareEnabled", label: "Show share button", type: "toggle" },
     { key: "sharePosition", label: "Share button position", type: "select", options: ["left", "right"] },
   ] }],
-  couple: [{ title: "Couple", description: "Couple data used by the public Couple section.", fields: [
+  couple: [{ title: "Couple", description: "Couple data used by the public Couple section. Social links are managed separately.", fields: [
     { key: "coupleEnabled", label: "Show Couple section", type: "toggle" },
     { key: "groomName", label: "Groom name" },
     { key: "groomImageDriveId", label: "Groom photo Google Drive ID" },
@@ -126,9 +126,7 @@ function Card({ title, description, children }: { title: string; description: st
 }
 
 export default function WebsiteContentPanel({ child, token, settings, setSettings, notify }: { child: Child; token: string; settings: Settings; setSettings: (v: any) => void; notify: (message: string) => void }) {
-  const config = groups[child];
-  const initial = useMemo(() => ({ ...defaults, ...(settings.wedding || {}) }), [settings.wedding]);
-  const [draft, setDraft] = useState<Settings>(initial);
+  const [draft, setDraft] = useState<Settings>({ ...defaults, ...(settings.wedding || {}) });
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   useEffect(() => { setDraft({ ...defaults, ...(settings.wedding || {}) }); setDirty(false); }, [settings.wedding]);
@@ -151,9 +149,9 @@ export default function WebsiteContentPanel({ child, token, settings, setSetting
     window.open("/?preview=draft", "_blank", "noopener,noreferrer");
   };
   return <div className="space-y-5">
-    <Card title={config[0].title} description={config[0].description}>
+    <Card title={groups[child][0].title} description={groups[child][0].description}>
       <div className="grid gap-4 md:grid-cols-2">
-        {config[0].fields.map((field) => field.type === "toggle" ? <label key={field.key} className="flex min-h-12 items-center justify-between gap-4 rounded-xl border p-3 text-sm font-medium"><span>{field.label}</span><input type="checkbox" checked={Boolean(draft[field.key])} onChange={(e) => set(field.key, e.target.checked)} /></label>
+        {groups[child][0].fields.map((field) => field.type === "toggle" ? <label key={field.key} className="flex min-h-12 items-center justify-between gap-4 rounded-xl border p-3 text-sm font-medium"><span>{field.label}</span><input type="checkbox" checked={Boolean(draft[field.key])} onChange={(e) => set(field.key, e.target.checked)} /></label>
           : field.type === "textarea" ? <label key={field.key} className="block text-sm font-medium md:col-span-2"><span>{field.label}</span><textarea value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 min-h-28 w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>
           : field.type === "select" ? <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><select value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3">{(field.options || []).map((option) => <option key={option} value={option}>{option}</option>)}</select>{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>
           : <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><input type={field.type || "text"} min={field.type === "number" ? 1 : undefined} max={field.type === "number" ? 10 : undefined} value={draft[field.key] ?? ""} onChange={(e) => set(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>)}
