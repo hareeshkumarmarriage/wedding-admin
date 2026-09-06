@@ -6,7 +6,6 @@ type Settings = Record<string, any>;
 type Child = "home" | "couple" | "story" | "gallery" | "rsvp" | "footer" | "navigation";
 
 const defaults: Settings = {
-  homeEnabled: true,
   groomName: "Hareesh Kumar",
   brideName: "Prasanna",
   heroTitle: "We Are Married",
@@ -19,18 +18,14 @@ const defaults: Settings = {
   heroImageDriveId: "",
   shareEnabled: true,
   sharePosition: "left",
-  coupleEnabled: true,
   groomImageDriveId: "",
   groomImagePosition: "center",
   brideImageDriveId: "",
   brideImagePosition: "center",
-  storyEnabled: true,
   storyTitle: "Our Journey",
   storyDescription: "A collection of beautiful moments from our journey",
-  galleryEnabled: true,
   galleryHeading: "Sweet Memories",
   galleryDescription: "Our Captured Moments",
-  rsvpEnabled: true,
   rsvpHeading: "RSVP",
   rsvpDescription: "Your presence would mean the world to us.",
   rsvpMaxGuests: 8,
@@ -45,7 +40,6 @@ const defaults: Settings = {
   rsvpSubmitText: "Confirm RSVP",
   rsvpSuccessTitle: "Thank you!",
   rsvpSuccessMessage: "We look forward to celebrating with you.",
-  footerEnabled: true,
   footerText: "Made with love for our special day",
   footerCopyright: "",
   footerShowSocial: true,
@@ -56,8 +50,7 @@ const defaults: Settings = {
 };
 
 const groups: Record<Child, { title: string; description: string; fields: { key: string; label: string; type?: "text" | "textarea" | "date" | "time" | "number" | "toggle" | "select"; options?: string[]; help?: string }[] }[]> = {
-  home: [{ title: "Hero content", description: "These values are read directly by the public homepage hero.", fields: [
-    { key: "homeEnabled", label: "Show Home / Hero", type: "toggle" },
+  home: [{ title: "Home / Hero", description: "Edit the content for the Home section. Section visibility and order are controlled by Section Manager.", fields: [
     { key: "heroTitle", label: "Hero title" },
     { key: "groomName", label: "Groom name" },
     { key: "brideName", label: "Bride name" },
@@ -71,8 +64,7 @@ const groups: Record<Child, { title: string; description: string; fields: { key:
     { key: "shareEnabled", label: "Show share button", type: "toggle" },
     { key: "sharePosition", label: "Share button position", type: "select", options: ["left", "right"] },
   ] }],
-  couple: [{ title: "Couple", description: "Couple data used by the public Couple section. Social links are managed separately.", fields: [
-    { key: "coupleEnabled", label: "Show Couple section", type: "toggle" },
+  couple: [{ title: "Couple", description: "Couple data used by the public Couple section. Social links are managed separately. Section visibility and order are controlled by Section Manager.", fields: [
     { key: "groomName", label: "Groom name" },
     { key: "groomImageDriveId", label: "Groom photo Google Drive ID" },
     { key: "groomImagePosition", label: "Groom photo position", type: "select", options: ["center", "top", "bottom", "left", "right"] },
@@ -80,18 +72,15 @@ const groups: Record<Child, { title: string; description: string; fields: { key:
     { key: "brideImageDriveId", label: "Bride photo Google Drive ID" },
     { key: "brideImagePosition", label: "Bride photo position", type: "select", options: ["center", "top", "bottom", "left", "right"] },
   ] }],
-  story: [{ title: "Story & timeline", description: "The timeline cards come from Events. This panel controls the Story section heading and visibility.", fields: [
-    { key: "storyEnabled", label: "Show Story section", type: "toggle" },
-    { key: "storyTitle", label: "Story subtitle" },
+  story: [{ title: "Story", description: "The timeline cards come from Events. This panel controls the Story content. Section visibility and order are controlled by Section Manager.", fields: [
+    { key: "storyTitle", label: "Story title" },
     { key: "storyDescription", label: "Story description", type: "textarea" },
   ] }],
-  gallery: [{ title: "Gallery", description: "The main page shows the Gallery introduction. Photos and videos stay inside event galleries.", fields: [
-    { key: "galleryEnabled", label: "Show Gallery section", type: "toggle" },
+  gallery: [{ title: "Gallery", description: "The main page shows the Gallery introduction. Photos and videos stay inside event galleries. Section visibility and order are controlled by Section Manager.", fields: [
     { key: "galleryHeading", label: "Gallery heading" },
     { key: "galleryDescription", label: "Gallery description", type: "textarea" },
   ] }],
-  rsvp: [{ title: "RSVP", description: "Control the public RSVP form without changing the RSVP response data.", fields: [
-    { key: "rsvpEnabled", label: "Show RSVP section", type: "toggle" },
+  rsvp: [{ title: "RSVP", description: "Control the public RSVP form without changing RSVP response data. Section visibility and order are controlled by Section Manager.", fields: [
     { key: "rsvpHeading", label: "Heading" },
     { key: "rsvpDescription", label: "Description", type: "textarea" },
     { key: "rsvpMaxGuests", label: "Maximum guests", type: "number", help: "Allowed range is 1–10." },
@@ -108,12 +97,11 @@ const groups: Record<Child, { title: string; description: string; fields: { key:
     { key: "rsvpSuccessMessage", label: "Success message", type: "textarea" },
   ] }],
   footer: [{ title: "Footer", description: "Footer content. Social URLs remain managed by Social & Contact.", fields: [
-    { key: "footerEnabled", label: "Show Footer", type: "toggle" },
     { key: "footerText", label: "Footer text" },
     { key: "footerCopyright", label: "Copyright text" },
     { key: "footerShowSocial", label: "Show social icons", type: "toggle" },
   ] }],
-  navigation: [{ title: "Navigation", description: "These controls map directly to the public navigation component.", fields: [
+  navigation: [{ title: "Navigation", description: "Navigation display settings. Section visibility and order are controlled by Section Manager.", fields: [
     { key: "navigationSticky", label: "Sticky navigation", type: "toggle" },
     { key: "navigationHome", label: "Show Home", type: "toggle" },
     { key: "navigationEvents", label: "Show Events / Story link", type: "toggle" },
@@ -162,6 +150,6 @@ export default function WebsiteContentPanel({ child, token, settings, setSetting
         <button type="button" onClick={preview} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border bg-background px-4 text-sm font-medium"><Eye size={15}/>Preview draft</button>
       </div>
     </Card>
-    <div className="rounded-2xl border border-dashed p-4 text-xs text-muted-foreground">Changes are stored in the public <code>wedding</code> settings object used by the website. Event details, media, social URLs and section ordering are managed in their dedicated panels.</div>
+    <div className="rounded-2xl border border-dashed p-4 text-xs text-muted-foreground">Section Manager is the single source of truth for Website section visibility and order. This panel edits content only. Event details, media, social URLs and other dedicated data remain in their dedicated panels.</div>
   </div>;
 }
