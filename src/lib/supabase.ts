@@ -5,7 +5,27 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 const ACCESS_TOKEN_KEY = "wedding-admin-access-token";
 const REFRESH_TOKEN_KEY = "wedding-admin-refresh-token";
+const PREVIEW_KEY = "wedding-admin-preview-snapshot-v1";
 let refreshInFlight: Promise<string | null> | null = null;
+
+function getPreviewData<T>(table: string): T | null {
+  if (typeof window === "undefined" || new URLSearchParams(window.location.search).get("preview") !== "draft") return null;
+  if (!["site_settings_public", "homepage_sections_public", "events_public"].includes(table)) return null;
+  try {
+    const raw = localStorage.getItem(PREVIEW_KEY);
+    if (!raw) return null;
+    const snapshot = JSON.parse(raw)?.snapshot;
+    if (!snapshot || snapshot.schema !== 1) return null;
+    if (table === "site_settings_public") {
+      const rows = Array.isArray(snapshot.site_settings) ? snapshot.site_settings.filter((row: any) => ["wedding", "theme", "siteControl"].includes(row?.key)).map((row: any) => ({ key: row.key, value: row.value })) : [];
+      return rows as T;
+    }
+    if (table === "homepage_sections_public") return (Array.isArray(snapshot.homepage_sections) ? snapshot.homepage_sections : []).slice().sort((a: any, b: any) => Number(a.sort_order || 0) - Number(b.sort_order || 0)) as T;
+    return (Array.isArray(snapshot.events) ? snapshot.events : []).slice().sort((a: any, b: any) => Number(a.sort_order || 0) - Number(b.sort_order || 0)) as T;
+  } catch {
+    return null;
+  }
+}
 
 async function refreshSupabaseSession(): Promise<string | null> {
   if (!isSupabaseConfigured || typeof window === "undefined") return null;
@@ -70,6 +90,9 @@ export async function supabaseRest<T>(
   } = {},
 ): Promise<T> {
   if (!isSupabaseConfigured) throw new Error("Supabase is not configured");
+
+  const preview = getPreviewData<T>(table);
+  if (preview !== null && (options.method || "GET").toUpperCase() === "GET") return preview;
 
   let response = await requestSupabase<T>(table, options);
 
