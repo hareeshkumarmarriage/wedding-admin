@@ -155,15 +155,24 @@ export default function WebsiteContentPanel({ child, token, settings, setSetting
     } catch (error) { notify(error instanceof Error ? error.message : "Preview failed."); }
   };
   const group = groups[child]?.[0] || groups.home[0];
+  const renderField = (field: (typeof group.fields)[number]) => {
+    if (field.type === "drive-image") {
+      return <DriveImageField key={field.key} label={field.label} value={draft[field.key]} onChange={(value) => set(field.key, value)} help={field.help} />;
+    }
+    if (field.type === "toggle") {
+      return <label key={field.key} className="flex min-h-12 items-center justify-between gap-4 rounded-xl border p-3 text-sm font-medium"><span>{field.label}</span><input type="checkbox" checked={Boolean(draft[field.key])} onChange={(e) => set(field.key, e.target.checked)} /></label>;
+    }
+    if (field.type === "textarea") {
+      return <label key={field.key} className="block text-sm font-medium md:col-span-2"><span>{field.label}</span><textarea value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 min-h-28 w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help ? <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span> : null}</label>;
+    }
+    if (field.type === "select") {
+      return <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><select value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3">{(field.options || []).map((option) => <option key={option} value={option}>{option}</option>)}</select>{field.help ? <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span> : null}</label>;
+    }
+    return <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><input type={field.type || "text"} min={field.type === "number" ? 1 : undefined} max={field.type === "number" ? 10 : undefined} value={draft[field.key] ?? ""} onChange={(e) => set(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help ? <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span> : null}</label>;
+  };
   return <div className="space-y-5">
     <Card title={group.title} description={group.description}>
-      <div className="grid gap-4 md:grid-cols-2">
-        {group.fields.map((field) => field.type === "drive-image" ? <DriveImageField key={field.key} label={field.label} value={draft[field.key]} onChange={(value) => set(field.key, value)} help={field.help} />
-          : field.type === "toggle" ? <label key={field.key} className="flex min-h-12 items-center justify-between gap-4 rounded-xl border p-3 text-sm font-medium"><span>{field.label}</span><input type="checkbox" checked={Boolean(draft[field.key])} onChange={(e) => set(field.key, e.target.checked)} /></label>
-          : field.type === "textarea" ? <label key={field.key} className="block text-sm font-medium md:col-span-2"><span>{field.label}</span><textarea value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 min-h-28 w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>
-          : field.type === "select" ? <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><select value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3">{(field.options || []).map((option) => <option key={option} value={option}>{option}</option>)}</select>{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>
-          : <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><input type={field.type || "text"} min={field.type === "number" ? 1 : undefined} max={field.type === "number" ? 10 : undefined} value={draft[field.key] ?? ""} onChange={(e) => set(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span></label>)}
-      </div>
+      <div className="grid gap-4 md:grid-cols-2">{group.fields.map(renderField)}</div>
       <div className="mt-6 flex flex-wrap gap-2 border-t pt-5">
         <button type="button" onClick={() => void save()} disabled={saving || !dirty} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"><Check size={15}/>{saving ? "Saving…" : "Save Draft"}</button>
         <button type="button" onClick={reset} disabled={!dirty || saving} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border bg-background px-4 text-sm font-medium disabled:opacity-50"><RefreshCw size={15}/>Reset</button>
