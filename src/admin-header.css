@@ -1,7 +1,6 @@
 /* Admin header — compact, stable and touch-friendly on phones. */
 
 @media (max-width: 767px) {
-  /* The admin shell is the only page with a sticky header in this app. */
   header.sticky.top-0 {
     height: 56px;
     min-height: 56px;
@@ -35,7 +34,6 @@
     white-space: nowrap;
   }
 
-  /* Keep the Wedding Admin brand readable while removing desktop-sized padding. */
   header.sticky.top-0 > div > button:nth-of-type(2) {
     flex: 0 1 auto;
     width: auto;
@@ -59,7 +57,6 @@
     height: 15px;
   }
 
-  /* Preview + Publish: keep the real buttons/actions, but show only their icons on phones. */
   header.sticky.top-0 > div > button:nth-of-type(3),
   header.sticky.top-0 > div > button:nth-of-type(4) {
     font-size: 0;
@@ -79,7 +76,6 @@
     flex: 0 0 19px;
   }
 
-  /* Desktop search is intentionally removed from the compact phone header. */
   header.sticky.top-0 input {
     display: none;
   }
@@ -91,6 +87,102 @@
   header.sticky.top-0 > div > * {
     min-height: 0;
     min-width: 0;
+  }
+
+  /* Every module's child-selection bar becomes a clean touch grid on phones. */
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
+    padding: 2px;
+  }
+
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    max-width: none;
+    padding: 8px 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  /* Long selections get a full row instead of squeezing into a tiny cell. */
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto > button[title*=""] {
+    min-width: 0;
+  }
+
+  /* Prevent card headers/actions from colliding on narrow screens. */
+  main section > div:first-child {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  main section > div:first-child > h2 {
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+
+  main section > div:first-child > button,
+  main section > div:first-child > div {
+    max-width: 100%;
+  }
+
+  /* Rows used by Section Manager, lists and editors stack instead of overlapping. */
+  main .space-y-5 section .space-y-3 > div.flex.items-center,
+  main .space-y-5 section .space-y-2 > div.flex.items-center {
+    flex-wrap: wrap;
+  }
+
+  /* Section Manager action groups always stay below the section name. */
+  main .space-y-5 section .space-y-3 > div.flex.flex-col {
+    align-items: stretch;
+  }
+
+  main .space-y-5 section .space-y-3 > div.flex.flex-col > div.min-w-0 {
+    width: 100%;
+  }
+
+  main .space-y-5 section .space-y-3 > div.flex.flex-col > div.flex.w-full {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  /* Touch targets and wrapping for every form/action area. */
+  main button,
+  main input,
+  main textarea,
+  main select {
+    max-width: 100%;
+  }
+
+  main .flex.flex-wrap {
+    row-gap: 8px;
+  }
+
+  main .grid {
+    min-width: 0;
+  }
+
+  main img,
+  main video {
+    max-width: 100%;
+  }
+
+  /* Keep the global feedback message visible and away from browser edges. */
+  .admin-feedback-toast {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    width: auto;
+    max-width: none;
   }
 }
 
@@ -132,11 +224,38 @@
     min-height: 38px;
     max-height: 38px;
   }
+
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto > button {
+    min-height: 42px;
+    padding-left: 7px;
+    padding-right: 7px;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  /* Tablet: use a wrapping selection grid rather than horizontal clipping. */
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  main .space-y-5 > div.flex.gap-2.overflow-x-auto > button {
+    flex: 1 1 150px;
+    min-width: 120px;
+    max-width: 240px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   header.sticky.top-0,
-  header.sticky.top-0 * {
+  header.sticky.top-0 *,
+  main * {
     scroll-behavior: auto !important;
     transition: none !important;
   }
