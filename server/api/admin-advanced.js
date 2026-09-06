@@ -40,7 +40,7 @@ async function applySnapshot(snapshotData){
   for(const row of currentEvents){if(row?.id && !wantedEventIds.has(String(row.id))) await supa(`/rest/v1/events?id=eq.${encodeURIComponent(row.id)}`,{method:'DELETE'});}
 }
 async function setPublishedSnapshot(revisionIdValue,snapshotData){
-  await supa('/rest/v1/admin_published_snapshot?id=eq.true',{method:'PATCH',headers:{Prefer:'return=minimal'},body:{snapshot:snapshotData,revision_id:revisionIdValue,updated_at:new Date().toISOString()}});
+  await supa('/rest/v1/admin_published_snapshot?id=eq.true',{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({snapshot:snapshotData,revision_id:revisionIdValue,updated_at:new Date().toISOString()})});
 }
 
 export default async function handler(req,res){
@@ -75,7 +75,7 @@ export default async function handler(req,res){
       if(!revision)revision=await createRevision(admin,(req.body||{}).label||`Publish ${new Date().toLocaleString()}`);
       await applySnapshot(revision.snapshot);
       await setPublishedSnapshot(revision.id,revision.snapshot);
-      await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(revision.id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:{status:'published',published_at:new Date().toISOString()}});
+      await supa(`/rest/v1/admin_revisions?id=eq.${encodeURIComponent(revision.id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'published',published_at:new Date().toISOString()})});
       await supa('/rest/v1/admin_publish_history',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({revision_id:revision.id,action:'publish',published_by:admin.id})});
       await activity(admin,'publish','revision',revision.id,{version_no:revision.version_no,label:revision.label});
       return json(res,200,{ok:true,message:'Draft published successfully.',revision_id:revision.id,version_no:revision.version_no});
