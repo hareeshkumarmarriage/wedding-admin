@@ -1,15 +1,17 @@
 /* Admin header — compact, stable and touch-friendly on phones. */
 
 @media (max-width: 767px) {
-  body:has(.bg-muted\/20) header {
+  /* The admin shell is the only page with a sticky header in this app. */
+  header.sticky.top-0 {
     height: 56px;
     min-height: 56px;
     max-height: 56px;
     padding: 0;
     overflow: hidden;
+    overscroll-behavior: contain;
   }
 
-  body:has(.bg-muted\/20) header > div {
+  header.sticky.top-0 > div {
     height: 56px;
     min-height: 56px;
     max-height: 56px;
@@ -19,7 +21,7 @@
     overflow: hidden;
   }
 
-  body:has(.bg-muted\/20) header button {
+  header.sticky.top-0 button {
     flex: 0 0 40px;
     width: 40px;
     min-width: 40px;
@@ -33,7 +35,8 @@
     white-space: nowrap;
   }
 
-  body:has(.bg-muted\/20) header > div > button:nth-of-type(2) {
+  /* Keep the Wedding Admin brand readable while removing desktop-sized padding. */
+  header.sticky.top-0 > div > button:nth-of-type(2) {
     flex: 0 1 auto;
     width: auto;
     min-width: 40px;
@@ -44,46 +47,48 @@
     box-shadow: none;
   }
 
-  body:has(.bg-muted\/20) header > div > button:nth-of-type(2) > span:first-child {
+  header.sticky.top-0 > div > button:nth-of-type(2) > span:first-child {
     width: 32px;
     height: 32px;
     min-width: 32px;
     border-radius: 9px;
   }
 
-  body:has(.bg-muted\/20) header > div > button:nth-of-type(2) svg {
+  header.sticky.top-0 > div > button:nth-of-type(2) svg {
     width: 15px;
     height: 15px;
   }
 
-  body:has(.bg-muted\/20) header input {
+  /* Desktop search is intentionally removed from the compact phone header. */
+  header.sticky.top-0 input {
     display: none;
   }
 
-  body:has(.bg-muted\/20) header .ml-auto {
+  header.sticky.top-0 .ml-auto {
     margin-left: auto;
   }
 
-  body:has(.bg-muted\/20) header > div > * {
+  header.sticky.top-0 > div > * {
     min-height: 0;
+    min-width: 0;
   }
 }
 
 @media (max-width: 380px) {
-  body:has(.bg-muted\/20) header,
-  body:has(.bg-muted\/20) header > div {
+  header.sticky.top-0,
+  header.sticky.top-0 > div {
     height: 52px;
     min-height: 52px;
     max-height: 52px;
   }
 
-  body:has(.bg-muted\/20) header > div {
+  header.sticky.top-0 > div {
     padding-left: max(6px, env(safe-area-inset-left));
     padding-right: max(6px, env(safe-area-inset-right));
     gap: 4px;
   }
 
-  body:has(.bg-muted\/20) header button {
+  header.sticky.top-0 button {
     flex-basis: 38px;
     width: 38px;
     min-width: 38px;
@@ -93,7 +98,15 @@
     max-height: 38px;
   }
 
-  body:has(.bg-muted\/20) header > div > button:nth-of-type(2) {
+  header.sticky.top-0 > div > button:nth-of-type(2) {
     max-width: 130px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  header.sticky.top-0,
+  header.sticky.top-0 * {
+    scroll-behavior: auto !important;
+    transition: none !important;
   }
 }
