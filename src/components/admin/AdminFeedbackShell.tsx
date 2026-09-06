@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import AdminActionFeedback, { type AdminFeedback, ADMIN_FEEDBACK_EVENT } from "./AdminActionFeedback";
-import AdminControlCenter from "@/pages/AdminControlCenterV5";
+import AdminControlCenter from "@/pages/AdminControlCenterV6";
 
 function classify(url: string, method: string) {
-  const u = url.toLowerCase();
-  const m = method.toUpperCase();
+  const u = url.toLowerCase(); const m = method.toUpperCase();
   if (u.includes("admin-advanced?action=publish")) return { title: "Publishing changes…", message: "Updating the live website and recording a new published version." };
   if (u.includes("admin-advanced?action=rollback")) return { title: "Restoring version to Draft…", message: "Preparing the selected published version as a new Draft. The live website will not change yet." };
   if (u.includes("admin-advanced?action=draft")) return { title: "Preparing Draft Preview…", message: "Creating a preview snapshot from your saved Draft. Please wait." };
@@ -23,11 +22,9 @@ function classify(url: string, method: string) {
 
 export default function AdminFeedbackShell() {
   const [feedback, setFeedback] = useState<AdminFeedback | null>(null);
-
   useEffect(() => {
     const onFeedback = (event: Event) => setFeedback((event as CustomEvent<AdminFeedback>).detail);
     window.addEventListener(ADMIN_FEEDBACK_EVENT, onFeedback);
-
     const originalFetch = window.fetch.bind(window);
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
@@ -47,9 +44,7 @@ export default function AdminFeedbackShell() {
                   ? { title: "Preview ready.", message: "The saved Draft preview is ready. These changes are not live yet." }
                   : { title: "Draft saved successfully.", message: "Your changes are safely saved in Draft. The live website is unchanged." };
             setFeedback({ kind: "success", ...success });
-          } else {
-            setFeedback({ kind: "error", title: "Action failed.", message: `The request could not be completed (HTTP ${response.status}). Your previous saved state remains unchanged.`, duration: 9000 });
-          }
+          } else setFeedback({ kind: "error", title: "Action failed.", message: `The request could not be completed (HTTP ${response.status}). Your previous saved state remains unchanged.`, duration: 9000 });
         }
         return response;
       } catch (error) {
@@ -57,12 +52,7 @@ export default function AdminFeedbackShell() {
         throw error;
       }
     };
-
-    return () => {
-      window.fetch = originalFetch;
-      window.removeEventListener(ADMIN_FEEDBACK_EVENT, onFeedback);
-    };
+    return () => { window.fetch = originalFetch; window.removeEventListener(ADMIN_FEEDBACK_EVENT, onFeedback); };
   }, []);
-
   return <><AdminControlCenter /><AdminActionFeedback feedback={feedback} onClose={() => setFeedback(null)} /></>;
 }
