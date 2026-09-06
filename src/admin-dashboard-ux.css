@@ -1,4 +1,4 @@
-/* Admin Dashboard UI/UX v3 — responsive mobile-first polish */
+/* Admin Dashboard UI/UX v4 — responsive mobile-first polish */
 body.admin-polished {
   --admin-bg:#f6f3f1;
   --admin-surface:#ffffff;
@@ -16,7 +16,6 @@ body.admin-polished main h1 { letter-spacing:-.025em; font-weight:700; }
 body.admin-polished main h2 { letter-spacing:-.02em; }
 body.admin-polished main h3 { letter-spacing:-.01em; }
 body.admin-polished main p.text-muted-foreground { line-height:1.55; }
-
 body.admin-polished main .rounded-3xl,
 body.admin-polished main .rounded-2xl,
 body.admin-polished main .rounded-xl { border-color:var(--admin-border); }
@@ -30,12 +29,10 @@ body.admin-polished main .rounded-3xl:hover {
 }
 body.admin-polished main .rounded-3xl:has(.font-display.text-3xl) { min-height:122px; }
 body.admin-polished main .rounded-3xl:has(.font-display.text-3xl) .grid { box-shadow:0 5px 14px rgba(80,45,35,.08); }
-
 body.admin-polished details.rounded-3xl > summary { min-height:76px; transition:background .16s ease; }
 body.admin-polished details.rounded-3xl > summary:hover { background:#fcfaf9; }
 body.admin-polished details.rounded-3xl[open] > summary { background:linear-gradient(180deg,#fff,#fdfafa); }
 body.admin-polished details.rounded-3xl[open] > summary svg { transform:rotate(180deg); }
-
 body.admin-polished main input,
 body.admin-polished main textarea,
 body.admin-polished main select { background:var(--admin-surface); color:var(--admin-text); }
@@ -53,7 +50,6 @@ body.admin-polished main button[class*="bg-primary"] { box-shadow:0 5px 15px rgb
 body.admin-polished main .flex.items-center.justify-between,
 body.admin-polished main .flex.items-center.gap-2 { min-width:0; }
 body.admin-polished main .flex.flex-wrap { row-gap:10px; }
-
 body.admin-polished main table {
   border-collapse:separate; border-spacing:0; width:100%; overflow:hidden;
   border:1px solid var(--admin-border); border-radius:16px; background:#fff;
@@ -79,43 +75,43 @@ body.admin-polished main .text-center { line-height:1.55; }
   body.admin-polished main > div { max-width:1440px; margin-inline:auto; }
   body.admin-polished main .grid { gap:16px; }
 }
-
 @media (min-width:768px) and (max-width:1023px) {
   body.admin-polished main { padding-left:0; padding-right:0; }
   body.admin-polished main .grid { gap:14px; }
 }
 
-/* Mobile dashboard: compact, readable, no accidental horizontal overflow. */
+/* Mobile dashboard: compact cards, stable forms and no accidental viewport overflow. */
 @media (max-width:767px) {
+  html { overflow-x:hidden; }
+  body.admin-polished { overflow-x:hidden; }
   body.admin-polished main {
+    width:100%;
+    max-width:100vw;
+    min-width:0;
     padding:12px!important;
     overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
   }
-  body.admin-polished main > div { max-width:100%; min-width:0; }
+  body.admin-polished main > div { width:100%; max-width:100%; min-width:0; }
   body.admin-polished main .rounded-3xl { border-radius:18px; }
   body.admin-polished main .rounded-2xl { border-radius:15px; }
   body.admin-polished main .rounded-xl { border-radius:11px; }
-
-  /* Keep outer cards compact without changing inner component spacing. */
   body.admin-polished main .rounded-3xl,
   body.admin-polished main .rounded-2xl { padding:14px; }
   body.admin-polished main .rounded-3xl > .p-5,
   body.admin-polished main .rounded-2xl > .p-5 { padding:0; }
-
   body.admin-polished main h1 { font-size:1.35rem; line-height:1.2; }
   body.admin-polished main h2 { font-size:1.1rem; line-height:1.3; }
   body.admin-polished main h3 { font-size:.98rem; line-height:1.35; }
-
   body.admin-polished main input,
   body.admin-polished main textarea,
   body.admin-polished main select {
     min-height:44px;
+    width:100%;
     max-width:100%;
     font-size:16px;
   }
-  body.admin-polished main button { min-height:42px; }
-
-  /* Toolbars stack instead of squeezing text and actions together. */
+  body.admin-polished main button { min-height:42px; max-width:100%; }
   body.admin-polished main .flex.items-center.justify-between {
     flex-wrap:wrap;
     gap:10px;
@@ -124,14 +120,11 @@ body.admin-polished main .text-center { line-height:1.55; }
   body.admin-polished main .flex.items-center.justify-between > * { min-width:0; max-width:100%; }
   body.admin-polished main .flex.items-center.gap-2 { min-width:0; flex-wrap:wrap; }
   body.admin-polished main .flex.flex-wrap { row-gap:8px; }
-
-  /* Form grids: one field per row for reliable phone input. */
   body.admin-polished main .grid.grid-cols-2,
   body.admin-polished main .grid.grid-cols-3,
   body.admin-polished main .grid.grid-cols-4,
   body.admin-polished main .grid.grid-cols-5,
   body.admin-polished main .grid.grid-cols-6 { grid-template-columns:1fr; }
-
   body.admin-polished details.rounded-3xl > summary {
     min-height:58px;
     padding:2px 0;
@@ -142,30 +135,33 @@ body.admin-polished main .text-center { line-height:1.55; }
     padding-top:12px;
     margin-top:10px;
   }
-
-  /* Tables remain usable through their existing horizontal scroller. */
   body.admin-polished main table { min-width:680px; }
   body.admin-polished main .overflow-x-auto {
     max-width:100%;
     overflow-x:auto;
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
   }
-
-  /* Prevent long URLs/IDs from widening the viewport. */
   body.admin-polished main p,
   body.admin-polished main span,
   body.admin-polished main label,
   body.admin-polished main td,
-  body.admin-polished main th { overflow-wrap:anywhere; }
-
-  /* Dialogs should fit above the mobile keyboard and screen edges. */
+  body.admin-polished main th {
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
   body.admin-polished main [role="dialog"] {
     width:calc(100vw - 24px)!important;
     max-width:calc(100vw - 24px)!important;
     max-height:calc(100dvh - 24px);
+    overflow-x:hidden;
     overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
+  /* Keep fixed/sticky admin controls inside the safe phone viewport. */
+  body.admin-polished main [class*="fixed"],
+  body.admin-polished main [class*="sticky"] { max-width:100vw; }
 }
 
 @media (max-width:380px) {
@@ -178,5 +174,9 @@ body.admin-polished main .text-center { line-height:1.55; }
 }
 
 @media (prefers-reduced-motion:reduce) {
-  body.admin-polished main *, body.admin-polished main *::before, body.admin-polished main *::after { transition:none!important; }
+  body.admin-polished main *,
+  body.admin-polished main *::before,
+  body.admin-polished main *::after,
+  header.sticky.top-0,
+  header.sticky.top-0 * { transition:none!important; }
 }
