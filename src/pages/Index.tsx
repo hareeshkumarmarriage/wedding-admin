@@ -16,7 +16,19 @@ import RsvpSection from "@/components/wedding/RsvpSection";
 import ShareWedding from "@/components/wedding/ShareWedding";
 
 type SiteControl = { mode?: "all" | "landing" | "disabled"; pages?: Record<string, boolean>; maintenance?: { enabled?: boolean; title?: string; description?: string } };
-type WeddingSettings = { introEnabled?: boolean; groomName?: string; brideName?: string; introVideoDriveId?: string; introAutoplay?: boolean; introMuted?: boolean; introSkip?: boolean; introMobilePortrait?: boolean; introVideoPlayMode?: "once" | "always"; countdownEnabled?: boolean; storyEnabled?: boolean; galleryEnabled?: boolean; eventsEnabled?: boolean; rsvpEnabled?: boolean; guestbookEnabled?: boolean; footerEnabled?: boolean; [key: string]: unknown };
+type WeddingSettings = { introEnabled?: boolean; groomName?: string; brideName?: string; introVideoDriveId?: string; introAutoplay?: boolean; introMuted?: boolean; introSkip?: boolean; introMobilePortrait?: boolean; introVideoPlayMode?: "once" | "always"; countdownEnabled?: boolean; [key: string]: unknown };
+
+const DEFAULT_SECTIONS = [
+  { key: "hero", enabled: true, sort_order: 1, label: "Hero" },
+  { key: "couple", enabled: true, sort_order: 2, label: "Couple" },
+  { key: "story", enabled: true, sort_order: 3, label: "Story & Memories" },
+  { key: "gallery", enabled: true, sort_order: 4, label: "Gallery" },
+  { key: "events", enabled: true, sort_order: 5, label: "Wedding & Venue" },
+  { key: "rsvp", enabled: true, sort_order: 6, label: "RSVP" },
+  { key: "guestbook", enabled: true, sort_order: 7, label: "Guestbook" },
+  { key: "blog", enabled: false, sort_order: 8, label: "Blog" },
+  { key: "footer", enabled: true, sort_order: 9, label: "Footer" },
+];
 
 const Index = () => {
   const [showIntro, setShowIntro] = useState(false);
@@ -89,12 +101,6 @@ const Index = () => {
   }, [showIntro]);
   useEffect(() => { getPublicNotifications(10).then(setPublicNotifications).catch(() => {}); }, []);
 
-  const sectionEnabled = (key: string) => {
-    const map: Record<string, keyof WeddingSettings> = { hero: "homeEnabled", couple: "coupleEnabled", story: "storyEnabled", gallery: "galleryEnabled", events: "eventsEnabled", rsvp: "rsvpEnabled", guestbook: "guestbookEnabled", footer: "footerEnabled" };
-    const setting = map[key];
-    return setting ? wedding[setting] !== false : true;
-  };
-
   const submitVisitorName = async () => {
     const name = visitorName.trim(); if (!name) return; const deviceId = localStorage.getItem("wedding-public-viewer-device-id-v1") || "";
     try { const r = await fetch("/api/visitor-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device_id: deviceId, visitor_name: name }) }); const d = await r.json().catch(() => ({})); setVisitorBlocked(Boolean(d.blocked)); if (d.blocked) return; if (!r.ok || !d.ok) throw new Error(d.error || "Unable to save your name."); localStorage.setItem("wedding-public-viewer-name-v1", name); setVisitorPrompt(false); } catch {}
@@ -102,10 +108,10 @@ const Index = () => {
 
   if (siteControl.maintenance?.enabled === true || siteControl.mode === "disabled") return <main className="grid min-h-screen place-items-center bg-wedding-cream p-6 text-center"><div className="max-w-xl rounded-3xl border border-primary/10 bg-white/80 p-10 shadow-sm"><Heart className="mx-auto text-primary" fill="currentColor" size={34}/><h1 className="mt-5 font-display text-4xl">{siteControl.maintenance?.title || "We'll be back soon"}</h1><p className="mt-4 text-muted-foreground">{siteControl.maintenance?.description || "We're preparing something special for you. Please check back shortly."}</p></div></main>;
 
-  const defaultSections = [
-    { key: "hero", enabled: true, sort_order: 1, label: "Hero" }, { key: "couple", enabled: true, sort_order: 2, label: "Couple" }, { key: "story", enabled: true, sort_order: 3, label: "Story & Memories" }, { key: "gallery", enabled: true, sort_order: 4, label: "Gallery" }, { key: "events", enabled: true, sort_order: 5, label: "Wedding & Venue" }, { key: "rsvp", enabled: true, sort_order: 6, label: "RSVP" }, { key: "guestbook", enabled: true, sort_order: 7, label: "Guestbook" }, { key: "blog", enabled: false, sort_order: 8, label: "Blog" }, { key: "footer", enabled: true, sort_order: 9, label: "Footer" },
-  ];
-  const visibleSections = (sections.length ? sections : defaultSections).filter((s) => s.enabled && sectionEnabled(s.key) && (siteControl.mode !== "landing" || ["hero", "events", "footer"].includes(s.key)));
+  const sourceSections = sections.length ? sections : DEFAULT_SECTIONS;
+  const visibleSections = sourceSections
+    .filter((section) => section.enabled && (siteControl.mode !== "landing" || ["hero", "events", "footer"].includes(section.key)))
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
 
   return <>
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="overflow-x-hidden">
