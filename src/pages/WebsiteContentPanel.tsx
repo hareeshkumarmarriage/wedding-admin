@@ -7,6 +7,9 @@ type Child = "home" | "couple" | "story" | "gallery" | "rsvp" | "footer" | "navi
 const PREVIEW_KEY = "wedding-admin-preview-snapshot-v1";
 const driveFileUrl = (value?: string) => { const v = String(value || "").trim(); if (!v) return ""; const match = v.match(/(?:\/d\/|id=|file\/d\/)([a-zA-Z0-9_-]{10,})/); const id = match?.[1] || v; return `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`; };
 const driveThumbUrl = (value?: string) => { const v = String(value || "").trim(); if (!v) return ""; const match = v.match(/(?:\/d\/|id=|file\/d\/)([a-zA-Z0-9_-]{10,})/); const id = match?.[1] || v; return `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w1000`; };
+const cleanValue = (value: any) => { if (value === undefined || value === null) return ""; const text = String(value).trim(); return text === "" ? "" : text; };
+const parseSettingValue = (value: any): any => { if (typeof value !== "string") return value; try { return JSON.parse(value); } catch { return value; } };
+const firstSettingValue = (source: Settings, keys: string[]) => { for (const key of keys) { const value = parseSettingValue(source[key]); if (value && typeof value === "object" && !Array.isArray(value)) { const nested = firstSettingValue(value as Settings, ["driveId", "drive_id", "imageDriveId", "image_drive_id", "fileId", "file_id", "id", "url"]); if (nested) return nested; } const clean = cleanValue(value); if (clean) return clean; } return ""; };
 
 const defaults: Settings = {
   groomName: "Hareesh Kumar", brideName: "Prasanna", heroTitle: "We Are Married", description: "", heroSubtitle: "", date: "2026-04-04", time: "08:59 AM", timezone: "Asia/Kolkata", countdownEnabled: true, heroImageDriveId: "", shareEnabled: true, sharePosition: "left", groomImageDriveId: "", groomImagePosition: "center", brideImageDriveId: "", brideImagePosition: "center", storyTitle: "Our Journey", storyDescription: "A collection of beautiful moments from our journey", galleryHeading: "Sweet Memories", galleryDescription: "Our Captured Moments", rsvpHeading: "RSVP", rsvpDescription: "Your presence would mean the world to us.", rsvpMaxGuests: 8, rsvpShowEmail: true, rsvpShowPhone: true, rsvpShowGuestCount: true, rsvpShowMessage: true, rsvpRequireEmail: false, rsvpRequirePhone: false, rsvpYesText: "Yes, I'll be there ❤️", rsvpNoText: "Sorry, I can't", rsvpSubmitText: "Confirm RSVP", rsvpSuccessTitle: "Thank you!", rsvpSuccessMessage: "We look forward to celebrating with you.", footerText: "Made with love for our special day", footerCopyright: "", footerShowSocial: true, navigationSticky: true, navigationHome: true, navigationEvents: true, navigationGuestbook: false,
@@ -14,7 +17,7 @@ const defaults: Settings = {
 
 const groups: Record<Child, { title: string; description: string; fields: { key: string; label: string; type?: "text" | "textarea" | "date" | "time" | "number" | "toggle" | "select" | "drive-image"; options?: string[]; help?: string }[] }[]> = {
   home: [{ title: "Home / Hero", description: "Edit Home content. Section visibility and order are controlled by Section Manager.", fields: [{ key: "heroTitle", label: "Hero title" }, { key: "groomName", label: "Groom name" }, { key: "brideName", label: "Bride name" }, { key: "description", label: "Hero description", type: "textarea" }, { key: "heroSubtitle", label: "Hero subtitle" }, { key: "date", label: "Wedding date", type: "date" }, { key: "time", label: "Wedding time", type: "text", help: "Use 24-hour time or AM/PM, for example 08:59 AM." }, { key: "timezone", label: "Timezone", type: "select", options: ["Asia/Kolkata", "UTC", "Asia/Dubai", "Asia/Singapore"] }, { key: "countdownEnabled", label: "Show countdown", type: "toggle" }, { key: "heroImageDriveId", label: "Cover image Google Drive ID", type: "drive-image", help: "Paste only the Drive file ID. You can preview it and check the Drive URL before saving." }, { key: "shareEnabled", label: "Show share button", type: "toggle" }, { key: "sharePosition", label: "Share button position", type: "select", options: ["left", "right"] }] }],
-  couple: [{ title: "Couple", description: "Couple data used by the public Couple section. Social links are managed separately.", fields: [{ key: "groomName", label: "Groom name" }, { key: "groomImageDriveId", label: "Groom photo Google Drive ID", type: "drive-image", help: "Paste the Google Drive file ID. Preview and Check URL work before you save." }, { key: "groomImagePosition", label: "Groom photo position", type: "select", options: ["center", "top", "bottom", "left", "right"] }, { key: "brideName", label: "Bride name" }, { key: "brideImageDriveId", label: "Bride photo Google Drive ID", type: "drive-image", help: "Paste the Google Drive file ID. Preview and Check URL work before you save." }, { key: "brideImagePosition", label: "Bride photo position", type: "select", options: ["center", "top", "bottom", "left", "right"] }] }],
+  couple: [{ title: "Couple", description: "Couple data used by the public Couple section. Existing image IDs are loaded from the wedding settings and dedicated Couple settings when available.", fields: [{ key: "groomName", label: "Groom name" }, { key: "groomImageDriveId", label: "Groom photo Google Drive ID", type: "drive-image", help: "The existing database value is loaded automatically when present. You do not need to re-enter it." }, { key: "groomImagePosition", label: "Groom photo position", type: "select", options: ["center", "top", "bottom", "left", "right"] }, { key: "brideName", label: "Bride name" }, { key: "brideImageDriveId", label: "Bride photo Google Drive ID", type: "drive-image", help: "The existing database value is loaded automatically when present. You do not need to re-enter it." }, { key: "brideImagePosition", label: "Bride photo position", type: "select", options: ["center", "top", "bottom", "left", "right"] }] }],
   story: [{ title: "Story", description: "Timeline cards come from Events. This panel controls Story content.", fields: [{ key: "storyTitle", label: "Story title" }, { key: "storyDescription", label: "Story description", type: "textarea" }] }],
   gallery: [{ title: "Gallery", description: "The main page shows the Gallery introduction. Photos and videos stay inside event galleries.", fields: [{ key: "galleryHeading", label: "Gallery heading" }, { key: "galleryDescription", label: "Gallery description", type: "textarea" }] }],
   rsvp: [{ title: "RSVP", description: "Control the public RSVP form without changing RSVP response data.", fields: [{ key: "rsvpHeading", label: "Heading" }, { key: "rsvpDescription", label: "Description", type: "textarea" }, { key: "rsvpMaxGuests", label: "Maximum guests", type: "number", help: "Allowed range is 1–10." }, { key: "rsvpShowEmail", label: "Show email", type: "toggle" }, { key: "rsvpRequireEmail", label: "Require email", type: "toggle" }, { key: "rsvpShowPhone", label: "Show phone", type: "toggle" }, { key: "rsvpRequirePhone", label: "Require phone", type: "toggle" }, { key: "rsvpShowGuestCount", label: "Show guest count", type: "toggle" }, { key: "rsvpShowMessage", label: "Show message", type: "toggle" }, { key: "rsvpYesText", label: "Yes button text" }, { key: "rsvpNoText", label: "No button text" }, { key: "rsvpSubmitText", label: "Submit button text" }, { key: "rsvpSuccessTitle", label: "Success title" }, { key: "rsvpSuccessMessage", label: "Success message", type: "textarea" }] }],
@@ -44,7 +47,7 @@ function DriveImageField({ label, value, onChange, help }: { label: string; valu
         {!loaded && !failed && <span className="absolute sr-only">Loading preview…</span>}
       </div>
       <div className="border-t px-3 py-2 text-xs text-muted-foreground">Drive ID: <span className="font-mono">{id}</span></div>
-    </div> : <div className="mt-4 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Paste a Google Drive file ID to see the preview and URL check option.</div>}
+    </div> : <div className="mt-4 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">No Google Drive image ID is currently stored for this field.</div>}
   </div>;
 }
 
@@ -59,8 +62,8 @@ const WEDDING_ALIASES: Record<string, string[]> = {
   timezone: ["timezone", "time_zone"],
   countdownEnabled: ["countdownEnabled", "countdown_enabled"],
   heroImageDriveId: ["heroImageDriveId", "hero_image_drive_id", "coverImageDriveId", "cover_image_drive_id", "cover_image"],
-  groomImageDriveId: ["groomImageDriveId", "groom_image_drive_id", "groom_image_id"],
-  brideImageDriveId: ["brideImageDriveId", "bride_image_drive_id", "bride_image_id"],
+  groomImageDriveId: ["groomImageDriveId", "groom_image_drive_id", "groom_image_id", "groomImageId"],
+  brideImageDriveId: ["brideImageDriveId", "bride_image_drive_id", "bride_image_id", "brideImageId"],
   groomImagePosition: ["groomImagePosition", "groom_image_position"],
   brideImagePosition: ["brideImagePosition", "bride_image_position"],
   shareEnabled: ["shareEnabled", "share_enabled"],
@@ -73,10 +76,24 @@ const WEDDING_ALIASES: Record<string, string[]> = {
 
 function normalizeWeddingSettings(raw: any): Settings {
   const source = raw && typeof raw === "object" ? raw : {};
-  const next: Settings = { ...defaults, ...source };
+  const wedding = parseSettingValue(source.wedding);
+  const weddingSource: Settings = wedding && typeof wedding === "object" && !Array.isArray(wedding) ? wedding : {};
+  const merged: Settings = { ...source, ...weddingSource };
+  const next: Settings = { ...defaults, ...merged };
+  const externalAliases: Record<string, string[]> = {
+    groomImageDriveId: ["website.couple.groom_image_drive_id", "website.couple.groomImageDriveId", "website.couple.groom_image_id", "website.couple.groomImageId"],
+    brideImageDriveId: ["website.couple.bride_image_drive_id", "website.couple.brideImageDriveId", "website.couple.bride_image_id", "website.couple.brideImageId"],
+    heroImageDriveId: ["website.home.hero_image_drive_id", "website.home.heroImageDriveId", "website.home.cover_image_drive_id", "website.home.coverImageDriveId"],
+  };
   for (const [canonical, aliases] of Object.entries(WEDDING_ALIASES)) {
-    const found = aliases.map((key) => source[key]).find((value) => value !== undefined && value !== null && String(value).trim() !== "");
-    if (found !== undefined) next[canonical] = found;
+    const found = firstSettingValue(merged, aliases);
+    if (found) next[canonical] = found;
+  }
+  for (const [canonical, aliases] of Object.entries(externalAliases)) {
+    if (!cleanValue(next[canonical])) {
+      const found = firstSettingValue(source, aliases);
+      if (found) next[canonical] = found;
+    }
   }
   return next;
 }
@@ -94,30 +111,40 @@ function weddingForSave(draft: Settings, existing: Settings): Settings {
     storyDescription: ["story_description"], galleryHeading: ["gallery_heading"], galleryDescription: ["gallery_description"],
   };
   for (const [canonical, aliases] of Object.entries(mappings)) {
+    const value = cleanValue(draft[canonical]);
+    if (!value) continue;
     for (const alias of aliases) next[alias] = draft[canonical];
   }
   return next;
 }
 
 export default function WebsiteContentPanel({ child, token, settings, setSettings, notify }: { child: Child; token: string; settings: Settings; setSettings: (v: any) => void; notify: (message: string) => void }) {
-  const [draft, setDraft] = useState<Settings>(() => normalizeWeddingSettings(settings.wedding || settings));
+  const [draft, setDraft] = useState<Settings>(() => normalizeWeddingSettings(settings));
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  useEffect(() => { setDraft(normalizeWeddingSettings(settings.wedding || settings)); setDirty(false); }, [settings.wedding]);
+  useEffect(() => { setDraft(normalizeWeddingSettings(settings)); setDirty(false); }, [settings]);
   const set = (key: string, value: any) => { setDraft((d) => ({ ...d, [key]: value })); setDirty(true); };
   const save = async () => {
     if (!token) return notify("Admin session is missing.");
     setSaving(true);
     try {
-      const next = weddingForSave({ ...draft, rsvpMaxGuests: Math.min(10, Math.max(1, Number(draft.rsvpMaxGuests || 8))) }, (settings.wedding && typeof settings.wedding === "object") ? settings.wedding : {});
+      const safeDraft = { ...draft, rsvpMaxGuests: Math.min(10, Math.max(1, Number(draft.rsvpMaxGuests || 8))) };
+      const existingWedding = parseSettingValue(settings.wedding);
+      const next = weddingForSave(safeDraft, existingWedding && typeof existingWedding === "object" ? existingWedding : {});
+      const groomId = cleanValue(safeDraft.groomImageDriveId);
+      const brideId = cleanValue(safeDraft.brideImageDriveId);
+      const heroId = cleanValue(safeDraft.heroImageDriveId);
       await saveSiteSetting(token, "wedding", next);
-      setSettings((s: Settings) => ({ ...s, wedding: next }));
+      if (groomId) await saveSiteSetting(token, "website.couple.groom_image_drive_id", groomId);
+      if (brideId) await saveSiteSetting(token, "website.couple.bride_image_drive_id", brideId);
+      if (heroId) await saveSiteSetting(token, "website.home.hero_image_drive_id", heroId);
+      setSettings((s: Settings) => ({ ...s, wedding: next, ...(groomId ? { "website.couple.groom_image_drive_id": groomId } : {}), ...(brideId ? { "website.couple.bride_image_drive_id": brideId } : {}), ...(heroId ? { "website.home.hero_image_drive_id": heroId } : {}) }));
       await writeAdminAudit(token, "update_settings", "wedding", { panel: `website.${child}`, workflow: "draft" });
-      setDraft(next); setDirty(false); notify("Website settings saved to draft.");
+      setDraft(normalizeWeddingSettings({ ...settings, wedding: next, ...(groomId ? { "website.couple.groom_image_drive_id": groomId } : {}), ...(brideId ? { "website.couple.bride_image_drive_id": brideId } : {}), ...(heroId ? { "website.home.hero_image_drive_id": heroId } : {}) })); setDirty(false); notify("Website settings saved to draft.");
     } catch (error) { notify(error instanceof Error ? error.message : "Unable to save website settings."); }
     finally { setSaving(false); }
   };
-  const reset = () => { setDraft(normalizeWeddingSettings(settings.wedding || settings)); setDirty(false); };
+  const reset = () => { setDraft(normalizeWeddingSettings(settings)); setDirty(false); };
   const preview = async () => {
     try {
       const response = await fetch("/api/admin-advanced?action=draft", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ label: `Preview ${child} ${new Date().toLocaleString()}` }) });
@@ -135,7 +162,7 @@ export default function WebsiteContentPanel({ child, token, settings, setSetting
           : field.type === "toggle" ? <label key={field.key} className="flex min-h-12 items-center justify-between gap-4 rounded-xl border p-3 text-sm font-medium"><span>{field.label}</span><input type="checkbox" checked={Boolean(draft[field.key])} onChange={(e) => set(field.key, e.target.checked)} /></label>
           : field.type === "textarea" ? <label key={field.key} className="block text-sm font-medium md:col-span-2"><span>{field.label}</span><textarea value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 min-h-28 w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>
           : field.type === "select" ? <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><select value={draft[field.key] ?? ""} onChange={(e) => set(field.key, e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3">{(field.options || []).map((option) => <option key={option} value={option}>{option}</option>)}</select>{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>
-          : <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><input type={field.type || "text"} min={field.type === "number" ? 1 : undefined} max={field.type === "number" ? 10 : undefined} value={draft[field.key] ?? ""} onChange={(e) => set(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span>}</label>)}
+          : <label key={field.key} className="block text-sm font-medium"><span>{field.label}</span><input type={field.type || "text"} min={field.type === "number" ? 1 : undefined} max={field.type === "number" ? 10 : undefined} value={draft[field.key] ?? ""} onChange={(e) => set(field.key, field.type === "number" ? Number(e.target.value) : e.target.value)} className="mt-1 h-11 w-full rounded-xl border bg-background px-3 outline-none focus:ring-2 focus:ring-primary/20" />{field.help && <span className="mt-1 block text-xs font-normal text-muted-foreground">{field.help}</span></label>)}
       </div>
       <div className="mt-6 flex flex-wrap gap-2 border-t pt-5">
         <button type="button" onClick={() => void save()} disabled={saving || !dirty} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"><Check size={15}/>{saving ? "Saving…" : "Save Draft"}</button>
