@@ -228,6 +228,48 @@ export async function saveFavorite(eventId: string, photoId: string, favorite: b
   try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites)); } catch { /* Storage may be unavailable in private browsing. */ }
 }
 
+export async function getAdminRsvps(token: string) {
+  return supabaseRest<any[]>("rsvps", { token, query: "select=id,name,email,phone,attending,guest_count,message,created_at,updated_at&order=created_at.desc&limit=500" });
+}
+export async function updateAdminRsvp(token: string, id: string, patch: Record<string, any>) {
+  return supabaseRest("rsvps", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: patch, prefer: "return=representation" });
+}
+export async function deleteAdminRsvp(token: string, id: string) {
+  return supabaseRest("rsvps", { method: "DELETE", token, query: `id=eq.${encodeURIComponent(id)}` });
+}
+export async function getAdminBackups(token: string) {
+  const r = await fetch("/api/admin-advanced?action=backups", { headers: { Authorization: `Bearer ${token}` } });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to load backups."); return d.backups || [];
+}
+export async function createAdminBackup(token: string, label = "Full content backup") {
+  const r = await fetch("/api/admin-advanced?action=backup", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ label, backup_type: "full" }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to create backup."); return d.backup;
+}
+export async function restoreAdminBackup(token: string, id: string) {
+  const r = await fetch("/api/admin-advanced?action=restore_backup", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to restore backup."); return d;
+}
+export async function getTrashItems(token: string) {
+  const r = await fetch("/api/admin-advanced?action=trash", { headers: { Authorization: `Bearer ${token}` } });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to load trash."); return d.items || [];
+}
+export async function storeTrashItem(token: string, entity_type: string, entity_id: string, label: string, snapshot: any) {
+  const r = await fetch("/api/admin-advanced?action=trash_store", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ entity_type, entity_id, label, snapshot }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to move item to trash."); return d.item;
+}
+export async function restoreTrashItem(token: string, id: string) {
+  const r = await fetch("/api/admin-advanced?action=trash_restore", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to restore trash item."); return d;
+}
+export async function deleteTrashItem(token: string, id: string) {
+  const r = await fetch("/api/admin-advanced?action=trash_delete", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to permanently delete trash item."); return d;
+}
+export async function emptyTrash(token: string) {
+  const r = await fetch("/api/admin-advanced?action=trash_empty", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+  const d = await r.json().catch(() => ({})); if (!r.ok || !d.ok) throw new Error(d.error || "Unable to empty trash."); return d;
+}
+
 export async function getAdminAnalytics(token: string) {
   if (!token) throw new Error("Admin session is missing.");
   const rows = await supabaseRest<any[]>("gallery_views", { token, query: "select=event_id,media_type,media_id,created_at&order=created_at.desc&limit=1000" });
