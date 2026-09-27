@@ -57,11 +57,11 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: "audit-logs", label: "Audit Logs", description: "Immutable administrative activity history", group: "management", path: "/admin/audit-logs", actions: ["view", "manage"] },
   { id: "settings", label: "Settings", description: "General wedding and website settings", group: "system", path: "/admin/settings", actions: ["view", "edit", "manage"] },
   { id: "system", label: "System", description: "Service health and diagnostics", group: "system", path: "/admin/system", actions: ["view", "manage"] },
-  { id: "backup-restore", label: "Backup & Restore", description: "Backups and recovery operations", group: "system", path: "/admin/backup-restore", actions: ["view", "create", "manage"], future: true },
+  { id: "backup-restore", label: "Backup & Restore", description: "Backups and recovery operations", group: "system", path: "/admin/backup-restore", actions: ["view", "create", "manage"] },
   { id: "integrations", label: "Integrations", description: "Supabase, Drive, Maps and external services", group: "system", path: "/admin/integrations", actions: ["view", "edit", "manage"] },
   { id: "publishing", label: "Publishing", description: "Draft, preview, validation and publishing", group: "system", path: "/admin/publishing", actions: ["view", "publish", "manage"] },
   { id: "testing-diagnostics", label: "Testing & Diagnostics", description: "Pre-publish and service checks", group: "system", path: "/admin/testing-diagnostics", actions: ["view", "manage"] },
-  { id: "trash-recovery", label: "Trash & Recovery", description: "Recover deleted content", group: "system", path: "/admin/trash-recovery", actions: ["view", "delete", "manage"], future: true },
+  { id: "trash-recovery", label: "Trash & Recovery", description: "Recover deleted content", group: "system", path: "/admin/trash-recovery", actions: ["view", "delete", "manage"] },
   { id: "help", label: "Help & Support", description: "Documentation and troubleshooting", group: "system", path: "/admin/help", actions: ["view"] },
 ];
 
