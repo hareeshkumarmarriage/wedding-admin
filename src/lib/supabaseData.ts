@@ -228,9 +228,6 @@ export async function saveFavorite(eventId: string, photoId: string, favorite: b
   try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites)); } catch { /* Storage may be unavailable in private browsing. */ }
 }
 
-export async function getAdminRsvps(token: string) {
-  return supabaseRest<any[]>("rsvps", { token, query: "select=id,name,email,phone,attending,guest_count,message,created_at,updated_at&order=created_at.desc&limit=500" });
-}
 export async function updateAdminRsvp(token: string, id: string, patch: Record<string, any>) {
   return supabaseRest("rsvps", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: patch, prefer: "return=representation" });
 }
