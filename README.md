@@ -11,7 +11,7 @@
 1. Copy `.env.example` to `.env`.
 2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 3. Set `VITE_GOOGLE_DRIVE_API_KEY` and `VITE_GOOGLE_DRIVE_FOLDER_ID` only if you intentionally use the browser-side Drive API. The Drive API key is **not a secret**; restrict it in Google Cloud by API, HTTP referrer, and quota.
-4. Run `supabase/schema.sql`.
+4. Apply the timestamped migrations in `supabase/migrations/` in order (the repository does not maintain a root `supabase/schema.sql`).
 5. In Vercel set these **server-only** variables:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
@@ -121,3 +121,12 @@ After deploying this build, run `supabase/migrations/20260825_audit_and_sessions
 - Run `npm run test:all` before production deploys.
 - Run the latest `supabase/schema.sql` migration after deploying this version.
 - Favorites are intentionally local-only until a server-issued visitor identity is enabled.
+
+
+### Admin completion update
+
+The current main branch uses `src/admin/moduleRegistry.ts` as the authoritative 24-module registry. RSVP response management is available under Website → RSVP, while Notifications owns maintenance and announcement messaging.
+
+Backup & Restore now supports durable database/content snapshots through Supabase, JSON export, and restore-to-Draft. Trash & Recovery stores deleted event/guestbook records as recoverable snapshots. Media bytes remain in Google Drive/Supabase Storage and are not copied into database backups.
+
+The latest additive migration is `supabase/migrations/20260927_admin_completion.sql`. Apply it in every environment before using the new backup, notification scheduling, or trash features.
