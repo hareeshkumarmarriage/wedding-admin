@@ -8,12 +8,15 @@ async function userForToken(token){if(!SUPABASE_URL||!SERVICE||!token)return nul
 async function adminForToken(token){const u=await userForToken(token);if(!u?.id)return null;const rows=await supa(`/rest/v1/profiles?id=eq.${encodeURIComponent(u.id)}&select=id,role,username,display_name&limit=1`);return rows[0]?.role==='admin'?{...u,profile:rows[0]}:null;}
 function revisionId(value){const id=String(value||'').trim();return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)?id:null;}
 async function snapshot(){
-  const [settings,sections,events]=await Promise.all([
+  const [settings,sections,events,guestbook,rsvps,notifications]=await Promise.all([
     supa('/rest/v1/site_settings?select=key,value,updated_at&order=key.asc'),
     supa('/rest/v1/homepage_sections?select=key,label,enabled,sort_order,updated_at&order=sort_order.asc'),
-    supa('/rest/v1/events?select=id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,created_at,updated_at&order=sort_order.asc')
+    supa('/rest/v1/events?select=id,slug,title,date,description,cover_image,cover_image_drive_id,drive_folder_id,photos_drive_folder_id,photos_drive_folder_id_2,videos_drive_folder_id,videos_drive_folder_id_2,sort_order,is_active,photos_enabled,videos_enabled,slideshow_enabled,qr_enabled,venue_name,venue_address,maps_url,created_at,updated_at&order=sort_order.asc'),
+    supa('/rest/v1/guestbook?select=id,name,message,event_id,approved,created_at,moderation_status,featured&order=created_at.asc'),
+    supa('/rest/v1/rsvps?select=id,name,email,phone,attending,guest_count,message,created_at,updated_at&order=created_at.asc'),
+    supa('/rest/v1/notifications?select=id,type,title,message,target,read_at,created_at,enabled,starts_at,ends_at,dismissible,page_scope,cta_label,cta_url&order=created_at.asc')
   ]);
-  return {schema:1,created_at:new Date().toISOString(),site_settings:settings,homepage_sections:sections,events};
+  return {schema:2,created_at:new Date().toISOString(),site_settings:settings,homepage_sections:sections,events,guestbook,rsvps,notifications};
 }
 async function activity(admin,action,entityType=null,entityId=null,details={}){try{await supa('/rest/v1/admin_activity',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({admin_id:admin.id,action,entity_type:entityType,entity_id:entityId,details})});}catch(e){console.warn('admin activity:',e.message);}}
 async function createRevision(admin,label='Draft',snapshotData=null){
@@ -24,10 +27,13 @@ async function createRevision(admin,label='Draft',snapshotData=null){
   return revision;
 }
 async function applySnapshot(snapshotData){
-  if(!snapshotData || snapshotData.schema !== 1) throw new Error('Unsupported revision snapshot.');
+  if(!snapshotData || ![1,2].includes(Number(snapshotData.schema))) throw new Error('Unsupported revision snapshot.');
   const settings=Array.isArray(snapshotData.site_settings)?snapshotData.site_settings:[];
   const sections=Array.isArray(snapshotData.homepage_sections)?snapshotData.homepage_sections:[];
   const events=Array.isArray(snapshotData.events)?snapshotData.events:[];
+  const guestbook=Array.isArray(snapshotData.guestbook)?snapshotData.guestbook:[];
+  const rsvps=Array.isArray(snapshotData.rsvps)?snapshotData.rsvps:[];
+  const notifications=Array.isArray(snapshotData.notifications)?snapshotData.notifications:[];
   const currentEvents=await supa('/rest/v1/events?select=id');
   const wantedEventIds=new Set(events.map(row=>String(row?.id||'')));
   for(const row of settings){if(!row?.key)continue;await supa(`/rest/v1/site_settings?key=eq.${encodeURIComponent(row.key)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:row.key,value:row.value,updated_at:new Date().toISOString()})});}
@@ -38,6 +44,11 @@ async function applySnapshot(snapshotData){
     await supa(`/rest/v1/events?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({...patch,updated_at:new Date().toISOString()})});
   }
   for(const row of currentEvents){if(row?.id && !wantedEventIds.has(String(row.id))) await supa(`/rest/v1/events?id=eq.${encodeURIComponent(row.id)}`,{method:'DELETE'});}
+  if(Number(snapshotData.schema) >= 2){
+    for(const row of guestbook){if(!row?.id)continue;const {id,created_at,...patch}=row;await supa(`/rest/v1/guestbook?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:patch});}
+    for(const row of rsvps){if(!row?.id)continue;const {id,created_at,...patch}=row;await supa(`/rest/v1/rsvps?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:patch});}
+    for(const row of notifications){if(!row?.id)continue;const {id,created_at,...patch}=row;await supa(`/rest/v1/notifications?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:patch});}
+  }
 }
 async function setPublishedSnapshot(revisionIdValue,snapshotData){
   await supa('/rest/v1/admin_published_snapshot?id=eq.true',{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({snapshot:snapshotData,revision_id:revisionIdValue,updated_at:new Date().toISOString()})});
@@ -49,14 +60,34 @@ export default async function handler(req,res){
     const admin=await adminForToken(token);
     if(!admin)return json(res,401,{ok:false,error:'Admin authorization required.'});
     const action=String(req.query?.action||(req.body||{}).action||'status');
-    const readActions=new Set(['snapshot','versions','version','activity','health','prelaunch','status']);
-    const writeActions=new Set(['draft','publish','rollback','discard']);
+    const readActions=new Set(['snapshot','versions','version','activity','health','prelaunch','status','backups','trash']);
+    const writeActions=new Set(['draft','publish','rollback','discard','backup','restore_backup','trash_store','trash_restore','trash_delete','trash_empty']);
     if((writeActions.has(action)&&req.method!=='POST')||(readActions.has(action)&&req.method!=='GET')){
       res.setHeader('Allow',writeActions.has(action)?'POST':'GET');
       return json(res,405,{ok:false,error:'Method not allowed.'});
     }
 
     if(action==='snapshot')return json(res,200,{ok:true,snapshot:await snapshot()});
+    if(action==='backups'){
+      const rows=await supa('/rest/v1/admin_backups?select=id,label,backup_type,created_by,created_at&order=created_at.desc&limit=100');
+      return json(res,200,{ok:true,backups:rows});
+    }
+    if(action==='backup'){
+      const data=await snapshot();
+      const rows=await supa('/rest/v1/admin_backups',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({label:(req.body||{}).label||'Full content backup',backup_type:(req.body||{}).backup_type||'full',snapshot:data,created_by:admin.id})});
+      const backup=Array.isArray(rows)?rows[0]:rows;
+      await activity(admin,'create_backup','backup',backup?.id,{backup_type:backup?.backup_type});
+      return json(res,201,{ok:true,backup});
+    }
+    if(action==='restore_backup'){
+      const id=revisionId((req.body||{}).id);if(!id)return json(res,400,{ok:false,error:'Valid backup ID is required.'});
+      const rows=await supa(`/rest/v1/admin_backups?id=eq.${encodeURIComponent(id)}&select=id,label,snapshot&limit=1`);
+      if(!rows[0])return json(res,404,{ok:false,error:'Backup not found.'});
+      await applySnapshot(rows[0].snapshot);
+      const draft=await createRevision(admin,`Restore backup: ${rows[0].label}`,rows[0].snapshot);
+      await activity(admin,'restore_backup','backup',id,{revision_id:draft.id});
+      return json(res,200,{ok:true,revision_id:draft.id,message:'Backup restored into Draft.'});
+    }
     if(action==='draft')return json(res,200,{ok:true,revision:await createRevision(admin,(req.body||{}).label||'Draft')});
     if(action==='versions'){
       const rows=await supa('/rest/v1/admin_revision_summary?select=*&order=created_at.desc&limit=100');
@@ -96,6 +127,33 @@ export default async function handler(req,res){
       const draft=await createRevision(admin,'Draft reset to current published version',published.snapshot);
       await activity(admin,'discard_draft','revision',draft.id,{published_revision_id:published.revision_id});
       return json(res,200,{ok:true,message:'Draft reset to the current published version.',revision_id:draft.id});
+    }
+    if(action==='trash'){
+      const rows=await supa('/rest/v1/trash_items?select=*&restored_at=is.null&order=deleted_at.desc&limit=200');
+      return json(res,200,{ok:true,items:rows});
+    }
+    if(action==='trash_store'){
+      const body=req.body||{}; if(!body.entity_type||!body.entity_id)return json(res,400,{ok:false,error:'Trash item type and ID are required.'});
+      const rows=await supa('/rest/v1/trash_items',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({entity_type:String(body.entity_type).slice(0,80),entity_id:String(body.entity_id).slice(0,128),label:String(body.label||'Deleted item').slice(0,200),snapshot:body.snapshot||{},deleted_by:admin.id,expires_at:body.expires_at||null})});
+      const item=Array.isArray(rows)?rows[0]:rows; await activity(admin,'trash_store',String(body.entity_type),String(body.entity_id),{trash_id:item?.id}); return json(res,201,{ok:true,item});
+    }
+    if(action==='trash_restore'){
+      const id=revisionId((req.body||{}).id); if(!id)return json(res,400,{ok:false,error:'Valid trash item ID is required.'});
+      const rows=await supa(`/rest/v1/trash_items?id=eq.${encodeURIComponent(id)}&restored_at=is.null&select=*&limit=1`);
+      const item=rows[0]; if(!item)return json(res,404,{ok:false,error:'Trash item not found.'});
+      const snap=item.snapshot||{}; const entity=item.entity_type;
+      if(entity==='event'&&snap.id){await supa(`/rest/v1/events?id=eq.${encodeURIComponent(snap.id)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(snap)});}
+      if(entity==='guestbook'&&snap.id){await supa(`/rest/v1/guestbook?id=eq.${encodeURIComponent(snap.id)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(snap)});}
+      if(entity==='rsvp'&&snap.id){await supa(`/rest/v1/rsvps?id=eq.${encodeURIComponent(snap.id)}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(snap)});}
+      await supa(`/rest/v1/trash_items?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({restored_at:new Date().toISOString()})});
+      await activity(admin,'trash_restore',entity,String(item.entity_id),{trash_id:id}); return json(res,200,{ok:true});
+    }
+    if(action==='trash_delete'){
+      const id=revisionId((req.body||{}).id); if(!id)return json(res,400,{ok:false,error:'Valid trash item ID is required.'});
+      await supa(`/rest/v1/trash_items?id=eq.${encodeURIComponent(id)}`,{method:'DELETE'}); await activity(admin,'trash_delete','trash',id,{}); return json(res,200,{ok:true});
+    }
+    if(action==='trash_empty'){
+      await supa('/rest/v1/trash_items?restored_at=is.null',{method:'DELETE'}); await activity(admin,'trash_empty','trash',null,{}); return json(res,200,{ok:true});
     }
     if(action==='activity'){
       const rows=await supa('/rest/v1/admin_activity?select=*&order=created_at.desc&limit=200');
