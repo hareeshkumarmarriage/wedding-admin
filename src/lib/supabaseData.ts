@@ -186,7 +186,7 @@ export async function createNotification(token: string, payload: Partial<Notific
 export async function markNotificationRead(token: string, id: string) { return supabaseRest("notifications", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: { read_at: new Date().toISOString() } }); }
 export async function deleteNotification(token: string, id: string) { return supabaseRest("notifications", { method: "DELETE", token, query: `id=eq.${encodeURIComponent(id)}` }); }
 export async function getAuditLogs(token: string) { return supabaseRest<any[]>("admin_audit_logs", { token, query: "select=*&order=created_at.desc&limit=200" }); }
-export async function getAdminFeaturedGuestbook(token: string) { return supabaseRest<GuestbookMessage[]>("guestbook", { token, query: "select=id,name,message,approved,moderation_status,featured,created_at&order=created_at.desc" }); }
+export async function getAdminFeaturedGuestbook(token: string) { return supabaseRest<GuestbookMessage[]>("guestbook", { token, query: "select=*&order=created_at.desc" }); }
 export async function setGuestbookModeration(token: string, id: string, status: "pending" | "approved" | "rejected") { return supabaseRest("guestbook", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: { approved: status === "approved", moderation_status: status }, prefer: "return=representation" }); }
 export async function setGuestbookFeatured(token: string, id: string, featured: boolean) { return supabaseRest("guestbook", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: { featured }, prefer: "return=representation" }); }
 
