@@ -36,7 +36,10 @@ export default async function handler(req, res) {
   const attending = body.attending === true;
   const guestCount = Number.isInteger(body.guest_count) ? body.guest_count : Number(body.guest_count || 0);
   const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (name.length < 1 || name.length > 100 || guestCount < 0 || guestCount > 20 || message.length > 500) {
+  const plusOne = body.plus_one === true;
+  const mealPreference = typeof body.meal_preference === "string" ? body.meal_preference.trim() : "";
+  const dietaryRequirements = typeof body.dietary_requirements === "string" ? body.dietary_requirements.trim() : "";
+  if (name.length < 1 || name.length > 100 || guestCount < 0 || guestCount > 20 || message.length > 500 || mealPreference.length > 120 || dietaryRequirements.length > 500) {
     return res.status(400).json({ ok: false, error: "Please check the RSVP details." });
   }
 
@@ -48,7 +51,7 @@ export default async function handler(req, res) {
     const response = await fetch(`${supabaseUrl}/rest/v1/rsvps`, {
       method: "POST",
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json", Prefer: "return=representation" },
-      body: JSON.stringify({ name, email: email || null, phone: phone || null, attending, guest_count: attending ? Math.max(1, guestCount) : 0, message }),
+      body: JSON.stringify({ name, email: email || null, phone: phone || null, attending, guest_count: attending ? Math.max(1, guestCount) : 0, plus_one: attending && plusOne, meal_preference: attending ? (mealPreference || null) : null, dietary_requirements: attending ? (dietaryRequirements || null) : null, message }),
     });
     if (!response.ok) return res.status(502).json({ ok: false, error: "Unable to save your RSVP right now." });
     return res.status(201).json({ ok: true });
