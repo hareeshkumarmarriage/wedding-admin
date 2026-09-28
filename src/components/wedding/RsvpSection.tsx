@@ -19,7 +19,7 @@ const RsvpSection = () => {
     if (!attending) return toast({ title: "Please choose an RSVP option", description: "Let us know if you can join us." });
     setSaving(true);
     try {
-      await submitRsvp({ name: name.trim(), email: email.trim(), phone: phone.trim(), attending: attending === "yes", guest_count: attending === "yes" ? guestCount : 0, plus_one: attending === "yes" && plusOne, meal_preference: attending === "yes" ? mealPreference.trim() : "", dietary_requirements: attending === "yes" ? dietaryRequirements.trim() : "", message: message.trim() } as any);
+      await submitRsvp({ name: name.trim(), email: email.trim(), phone: phone.trim(), attending: attending === "yes", guest_count: attending === "yes" ? guestCount : 0, plus_one: attending === "yes" && plusOne, meal_preference: attending === "yes" ? mealPreference.trim() : "", dietary_requirements: attending === "yes" ? dietaryRequirements.trim() : "", message: message.trim() });
       setDone(true); toast({ title: content.rsvpSuccessTitle || "Thank you!", description: content.rsvpSuccessMessage || (attending === "yes" ? "We look forward to celebrating with you." : "Thank you for letting us know.") });
       setName(""); setEmail(""); setPhone(""); setMessage(""); setAttending(null); setGuestCount(1); setPlusOne(false); setMealPreference(""); setDietaryRequirements("");
     } catch (error) { toast({ title: "RSVP could not be saved", description: error instanceof Error ? error.message : "Please try again." }); } finally { setSaving(false); }
