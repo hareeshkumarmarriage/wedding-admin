@@ -149,14 +149,14 @@ export async function writeAdminAudit(token: string, action: "login" | "logout" 
   } catch { /* Audit logging must never block the primary admin action. */ }
 }
 
-export async function submitRsvp(payload: { name: string; email?: string; phone?: string; attending: boolean; guest_count: number; message?: string }) {
+export async function submitRsvp(payload: { name: string; email?: string; phone?: string; attending: boolean; guest_count: number; plus_one?: boolean; meal_preference?: string; dietary_requirements?: string; message?: string }) {
   const response = await fetch("/api/rsvp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save your RSVP.");
   return data;
 }
 
-export interface RsvpRecord { id: string; name: string; email: string | null; phone: string | null; attending: boolean; guest_count: number; message: string; created_at: string; updated_at: string; }
+export interface RsvpRecord { id: string; name: string; email: string | null; phone: string | null; attending: boolean; guest_count: number; plus_one: boolean; meal_preference: string | null; dietary_requirements: string | null; message: string; created_at: string; updated_at: string; }
 export async function getAdminRsvps(token: string) { return supabaseRest<RsvpRecord[]>("rsvps", { token, query: "select=*&order=created_at.desc" }); }
 export async function updateRsvp(token: string, id: string, patch: Partial<RsvpRecord>) { return supabaseRest("rsvps", { method: "PATCH", token, query: `id=eq.${encodeURIComponent(id)}`, body: patch, prefer: "return=representation" }); }
 export async function deleteRsvp(token: string, id: string) { return supabaseRest("rsvps", { method: "DELETE", token, query: `id=eq.${encodeURIComponent(id)}` }); }
