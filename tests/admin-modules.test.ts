@@ -12,7 +12,7 @@ describe("admin specification coverage", () => {
   it("registers all 24 required admin modules in document order", () => {
     expect(ADMIN_MODULES).toHaveLength(24);
     expect(ADMIN_MODULES.map((module) => module.id)).toEqual(requiredModules);
-    expect(ADMIN_MODULES.map((module) => module.number)).toEqual(Array.from({ length: 24 }, (_, i) => i + 1));
+    expect(ADMIN_MODULES.map((module) => module.number)).toEqual(Array.from({ length: 24 }, (_, i) => i + 2));
     expect(ADMIN_MODULES.every((module) => module.status !== "planned")).toBe(true);
   });
 
@@ -33,14 +33,14 @@ describe("admin specification coverage", () => {
     expect(children("styling")).toEqual(["theme","colours","typography","animations","responsive","loading-screen"]);
     expect(children("alerts")).toEqual(expect.arrayContaining(["maintenance-status","maintenance-message","maintenance-apply-to","announcement-status","announcement-message","announcement-apply-to"]));
     expect(children("events")).toEqual(["event-list","event-details"]);
-    expect(children("rsvp")).toEqual(["rsvp-overview","guest-list","form-fields"]);
+    expect(children("rsvp")).toEqual(["rsvp-overview","guest-list","rsvp-form"]);
     expect(children("media")).toEqual(["media-source","gallery-qr-links","photo-video-listing","image-performance","media-delivery","guest-uploads","media-privacy","private-media-delivery"]);
     expect(children("interactions")).toEqual(expect.arrayContaining(["event-unlock","unlock-session","event-code-storage","unlock-protection","guestbook-interaction","analytics-interaction","favorites","qr-interaction","guest-photo-upload"]));
-    expect(children("access")).toEqual(["user-list","role-list","permissions"]);
-    expect(children("security")).toEqual(["security-settings","alert-settings","event-security"]);
+    expect(children("access")).toEqual(["user-list","roles-permissions","permissions"]);
+    expect(children("security")).toEqual(["account-security","security-alerts","event-security"]);
     expect(children("publishing")).toEqual(["publishing-status","publishing-actions","versions"]);
     expect(children("diagnostics")).toEqual(["website-test","performance","automated-testing","application-cache","code-splitting","diagnostics"]);
-    expect(children("integrations")).toEqual(["supabase","google-drive","github","vercel","environment-configuration","api-services","other-integrations"]);
+    expect(children("integrations")).toEqual(["database","storage","source-code","deployment","others"]);
     expect(children("backup")).toEqual(["create-backup","backup-history","restore-backup"]);
     expect(children("trash")).toEqual(["deleted-items","recovery-settings"]);
     expect(children("help")).toEqual(["documentation","support-actions","application-information"]);
