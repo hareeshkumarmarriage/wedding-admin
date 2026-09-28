@@ -1,0 +1,1 @@
+-- RSVP form completion migration applied to production Supabase.
