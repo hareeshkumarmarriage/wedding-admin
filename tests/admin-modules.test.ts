@@ -39,7 +39,7 @@ describe("admin specification coverage", () => {
     expect(children("access")).toEqual(["user-list","roles-permissions","permissions"]);
     expect(children("security")).toEqual(["account-security","security-alerts","event-security"]);
     expect(children("publishing")).toEqual(["publishing-status","publishing-actions","versions"]);
-    expect(children("diagnostics")).toEqual(["website-test","performance","automated-testing","application-cache","code-splitting","diagnostics"]);
+    expect(children("diagnostics")).toEqual(["website-test","performance","diagnostics"]);
     expect(children("integrations")).toEqual(["database","storage","source-code","deployment","others"]);
     expect(children("backup")).toEqual(["create-backup","backup-history","restore-backup"]);
     expect(children("trash")).toEqual(["deleted-items","recovery-settings"]);
