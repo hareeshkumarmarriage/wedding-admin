@@ -128,7 +128,7 @@ export default function WebsiteContentPanel({ child, token, settings, setSetting
     if (!token) return notify("Admin session is missing.");
     setSaving(true);
     try {
-      const safeDraft = { ...draft, rsvpMaxGuests: Math.min(10, Math.max(1, Number(draft.rsvpMaxGuests || 8))) };
+      const safeDraft: Settings = { ...draft, rsvpMaxGuests: Math.min(10, Math.max(1, Number(draft.rsvpMaxGuests || 8))) };
       const existingWedding = parseSettingValue(settings.wedding);
       const next = weddingForSave(safeDraft, existingWedding && typeof existingWedding === "object" ? existingWedding : {});
       const groomId = cleanValue(safeDraft.groomImageDriveId);
