@@ -43,7 +43,7 @@ describe("admin specification coverage", () => {
     expect(children("integrations")).toEqual(["supabase","google-drive","github","vercel","environment-configuration","api-services","other-integrations"]);
     expect(children("backup")).toEqual(["create-backup","backup-history","restore-backup"]);
     expect(children("trash")).toEqual(["deleted-items","recovery-settings"]);
-    expect(children("help")).toEqual(expect.arrayContaining(["documentation","support","support-actions","about","application-information"]));
+    expect(children("help")).toEqual(["documentation","support-actions","application-information"]);
   });
 
   it("defines the documented role model", () => {
