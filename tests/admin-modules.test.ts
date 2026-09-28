@@ -38,7 +38,7 @@ describe("admin specification coverage", () => {
     expect(children("interactions")).toEqual(expect.arrayContaining(["event-unlock","unlock-session","event-code-storage","unlock-protection","guestbook-interaction","analytics-interaction","favorites","qr-interaction","guest-photo-upload"]));
     expect(children("access")).toEqual(["user-list","role-list","permissions"]);
     expect(children("security")).toEqual(["security-settings","alert-settings","event-security"]);
-    expect(children("publishing")).toEqual(expect.arrayContaining(["publishing-status","preview-draft","publish-now","schedule-publish","unpublish","cancel-scheduled-publish","version-history","view-version","compare-version","restore-version"]));
+    expect(children("publishing")).toEqual(["publishing-status","publishing-actions","versions"]);
     expect(children("diagnostics")).toEqual(["website-test","performance","automated-testing","application-cache","code-splitting","diagnostics"]);
     expect(children("integrations")).toEqual(["supabase","google-drive","github","vercel","environment-configuration","api-services","other-integrations"]);
     expect(children("backup")).toEqual(["create-backup","backup-history","restore-backup"]);
