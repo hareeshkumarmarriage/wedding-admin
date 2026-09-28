@@ -57,6 +57,10 @@ function Module({module,selected,setSelected,token,data,setData,notify}:{module:
 
 function Content(p:{module:AdminModule;selected:string;token:string;data:R;setData:(v:R)=>void;notify:(v:string)=>void}){const {module,selected}=p;if(module.id==="events")return <Events {...p}/>;if(module.id==="rsvp")return <RSVP {...p}/>;if(module.id==="guestbook")return <Guestbook {...p}/>;if(module.id==="notifications")return <Notifications {...p}/>;if(module.id==="analytics")return <Analytics {...p}/>;if(module.id==="audit")return <Audit {...p}/>;if(module.id==="backup")return <Backup {...p}/>;if(module.id==="trash")return <Trash {...p}/>;if(module.id==="publishing")return <Publishing {...p}/>;if(module.id==="diagnostics")return <Diagnostics {...p}/>;if(module.id==="website"&&selected==="section-manager")return <Sections {...p}/>;return <SpecEditor {...p}/>}
 
+type FieldType="text"|"textarea"|"number"|"date"|"time"|"datetime"|"url"|"password"|"color"|"toggle"|"select"|"action"|"readonly";
+type FieldSpec={key:string;label:string;type?:FieldType;options?:string[];help?:string};
+const field=(label:string,key?:string):FieldSpec=>({key:key||label.toLowerCase().replace(/[^a-z0-9]+/g,"_"),label,type:"text"});
+const COMMON_SELECTS={theme:["Light","Dark","Classic","Minimal","Custom"],role:["Administrator","Editor","Viewer","Moderator","Custom"],language:["English","Tamil","Malayalam","Hindi"],dateFormat:["DD/MM/YYYY","MM/DD/YYYY","YYYY-MM-DD"],status:["Published","Draft","Maintenance","Offline","Enabled","Disabled"]};
 const SUB_FIELDS:Record<string,string>={
 "dashboard.website-status":"Current Website Status|Current Version|Last Published Date & Time|Last Modified Date & Time|Published By|Preview Draft",
 "dashboard.pending-actions":"Unpublished Changes|Pending RSVP|Pending Guestbook Approval|System Alerts|Failed Actions|View All",
