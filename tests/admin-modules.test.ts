@@ -29,7 +29,7 @@ describe("admin specification coverage", () => {
     const children = (id: string) => ADMIN_MODULES.find((module) => module.id === id)?.children.map((item) => item.id) ?? [];
 
     expect(children("dashboard")).toEqual(expect.arrayContaining(["website-status","pending-actions","system-health","recent-activity","current-session","quick-actions"]));
-    expect(children("website")).toEqual(expect.arrayContaining(["section-manager","intro","navigation","home-hero","couple","events-story-memory","gallery-highlights","rsvp","guestbook","footer"]));
+    expect(children("website")).toEqual(expect.arrayContaining(["section-manager","intro","navigation","home","couple","events-story-memory","gallery-highlights","rsvp","guestbook","footer"]));
     expect(children("styling")).toEqual(expect.arrayContaining(["theme","colours","typography","animations","responsive","loading-screen","loading-text","loading-logo","loading-animation","blink-heart","loading-duration"]));
     expect(children("alerts")).toEqual(expect.arrayContaining(["maintenance-status","maintenance-message","maintenance-apply-to","announcement-status","announcement-message","announcement-apply-to"]));
     expect(children("events")).toEqual(expect.arrayContaining(["event-list","event-details","event-information","schedule","location","gallery","videos","visibility","security"]));
