@@ -163,16 +163,16 @@ const SUB_FIELDS:Record<string,string>={
 "diagnostics.application-cache":"Service Worker Status|Application Shell Cache|Cached Resources|API Cache Exclusion|Cache Version|Clear Application Cache|Update Service Worker",
 "diagnostics.code-splitting":"Admin Route Loading|Gallery Route Loading|Video Route Loading|Lazy Loaded Components|Loading Status",
 "diagnostics.diagnostics":"Error Logs|Warning Logs|API Errors|Integration Errors|Clear Cache|Run Diagnostics",
-"integrations.supabase":"Supabase Authentication|Supabase Database|Supabase Storage|Events Data|Guestbook Data|Analytics Data|Guest Data|Admin Profiles|Row Level Security|Database Migration Status|Connection Status",
+"integrations.database":"Supabase Authentication|Supabase Database|Supabase Storage|Events Data|Guestbook Data|Analytics Data|Guest Data|Admin Profiles|Row Level Security|Database Migration Status|Connection Status",
 "integrations.storage":"Google Drive Authentication|Drive Folder ID|Media Folder|Photo Listing|Video Listing|Pagination|Thumbnail Generation|Media Refresh|Drive Connection Status|API Error Status",
 "integrations.source-code":"Server APIs",
 "integrations.deployment":"Deployment Status|Production URL|Preview Deployment|Serverless API Routes|Environment Variables|Deployment Logs|Build Status|Deployment History|Redeploy|Rollback Deployment",
-"integrations.google-drive":"Google Drive Authentication|Drive Folder ID|Media Folder|Photo Listing|Video Listing|Pagination|Thumbnail Generation|Media Refresh|Drive Connection Status|API Error Status",
-"integrations.github":"Server APIs",
-"integrations.vercel":"Deployment Status|Production URL|Preview Deployment|Serverless API Routes|Environment Variables|Deployment Logs|Build Status|Deployment History|Redeploy|Rollback Deployment",
+
+
+
 "integrations.environment-configuration":"Supabase URL|Supabase Anonymous Key|Supabase Service Role Key|Event Unlock Secret|Google Drive API Key|Google Drive Folder ID|Environment|Configuration Status",
 "integrations.api-services":"Event Unlock API|Guestbook API|Analytics API|Google Drive API|Guest Upload API|API Status|API Error Logs",
-"integrations.other-integrations":"Other third-party integrations|Service Name|Integration Status|API Status|Configuration",
+"integrations.others":"Other third-party integrations|Service Name|Integration Status|API Status|Configuration",
 "system.system-information":"Application Version|Database Version|Server Information|Environment|Time Zone|Storage Usage",
 "system.system-services":"Website Service|Database Service|Storage Service|Email Service|API Service|Cache Service",
 "backup.create-backup":"Full Backup|Website Content Backup|Media Backup|Database Backup|Automatic Backup|Backup Schedule",
