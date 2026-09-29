@@ -37,10 +37,10 @@ describe("admin specification coverage", () => {
     expect(children("media")).toEqual(["media-source","gallery-qr-links","photo-video-listing","image-performance","media-delivery","guest-uploads","media-privacy","private-media-delivery"]);
     expect(children("interactions")).toEqual(expect.arrayContaining(["event-unlock","unlock-session","event-code-storage","unlock-protection","guestbook-interaction","analytics-interaction","favorites","qr-interaction","guest-photo-upload"]));
     expect(children("access")).toEqual(["user-list","roles-permissions","permissions"]);
-    expect(children("security")).toEqual(["account-security","security-alerts","event-security"]);
+    expect(children("security")).toEqual(["security-settings","alert-settings","event-security"]);
     expect(children("publishing")).toEqual(["publishing-status","publishing-actions","versions"]);
-    expect(children("diagnostics")).toEqual(["website-test","performance","diagnostics"]);
-    expect(children("integrations")).toEqual(["database","storage","source-code","deployment","others"]);
+    expect(children("diagnostics")).toEqual(["website-test","performance","automated-testing","application-cache","code-splitting","diagnostics"]);
+    expect(children("integrations")).toEqual(["supabase","google-drive","github","vercel","environment-configuration","api-services","other-integrations"]);
     expect(children("backup")).toEqual(["create-backup","backup-history","restore-backup"]);
     expect(children("trash")).toEqual(["deleted-items","recovery-settings"]);
     expect(children("help")).toEqual(["documentation","support-actions","application-information"]);
