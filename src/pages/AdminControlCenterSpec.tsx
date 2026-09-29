@@ -13,7 +13,7 @@ website:[{label:"Home Page Section Manager",children:["section-manager"]},{label
 styling:[{label:"Appearance",children:["theme","colours","typography","animations","responsive"]},{label:"Loading",children:["loading-screen"]}],
 alerts:[{label:"Maintenance",children:["maintenance-status","maintenance-message","maintenance-apply-to"]},{label:"Announcement",children:["announcement-status","announcement-message","announcement-apply-to"]}],
 notifications:[{label:"",children:["notification-list","action-list"]}],
-analytics:[{label:"Overview",children:["overview"]},{label:"Visitor Analytics",children:["visitor-analytics"]},{label:"Page Analytics",children:["page-analytics"]},{label:"RSVP Analytics",children:["rsvp-analytics"]},{label:"Export",children:["export"]}],
+analytics:[{label:"Overview",children:["overview"]},{label:"Visitor Analytics",children:["visitor-analytics"]},{label:"Page Analytics",children:["page-analytics"]},{label:"RSVP Analytics",children:["rsvp-analytics"]},{label:"Gallery Analytics",children:["gallery-analytics"]},{label:"Export",children:["export"]}],
 events:[{label:"Events List",children:["event-list"]},{label:"Event Details",children:["event-details"]}],
 rsvp:[{label:"RSVP Overview",children:["rsvp-overview"]},{label:"Guest List",children:["guest-list"]},{label:"RSVP Form",children:["rsvp-form"]}],
 guestbook:[{label:"Guestbook Messages",children:["guestbook-messages","guest-details"]},{label:"Guestbook Settings",children:["guestbook-settings"]}],
