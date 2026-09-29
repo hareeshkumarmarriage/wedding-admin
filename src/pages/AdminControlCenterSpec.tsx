@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Check, ChevronRight, Eye, EyeOff, FileArchive, LogOut, Menu, Moon, RefreshCw, Search, ShieldCheck, Sparkles, Sun, Trash2, X, Maximize2, Minimize2, Pin, UserCircle } from "lucide-react";
+import { Check, ChevronRight, Eye, EyeOff, FileArchive, LogOut, Menu, Moon, RefreshCw, Search, ShieldCheck, Sparkles, LayoutDashboard, Sun, Trash2, X, Maximize2, Minimize2, Pin, UserCircle } from "lucide-react";
 import { ADMIN_MODULES, GROUP_LABELS, type AdminModule } from "@/admin/moduleRegistry";
 import { isSupabaseConfigured, supabaseRest } from "@/lib/supabase";
 import WebsiteContentPanel from "./WebsiteContentPanel";
@@ -146,7 +146,7 @@ const SUB_FIELDS:Record<string,string>={
 "interactions.qr-interaction":"QR interaction configuration",
 "interactions.guest-photo-upload":"Enable Guest Upload|Event Selection|Upload Link|Upload QR Code|Maximum File Size|Allowed File Types|Uploaded Photo Count|View Uploaded Photos|Delete Uploaded Photo|Download Uploaded Photo|Save Settings",
 "access.user-list":"List all users|Add User|Edit User|Disable User|Delete User|Reset Password",
-"access.roles-permissions":"Administrator|Editor|Viewer|Moderator|Custom Role",
+"access.role-list":"Administrator|Editor|Viewer",
 "access.permissions":"Website|Styling|RSVP|Guestbook|Media|Analytics|Publishing|Administration|Security",
 "administration.website-information":"Website Name|Website URL|Wedding Date|Time Zone|Language|Date Format|Save Changes",
 "administration.admin-preferences":"Default Dashboard View|Default Theme|Notification Preferences|Save Preferences",
@@ -178,13 +178,13 @@ const SUB_FIELDS:Record<string,string>={
 "backup.create-backup":"Full Backup|Website Content Backup|Media Backup|Database Backup|Automatic Backup|Backup Schedule",
 "backup.backup-history":"List all backups|View Backup|Download Backup|Delete Backup",
 "backup.restore-backup":"Select Backup|Restore Full System|Restore Website Content|Restore Media|Restore Database|Confirm Restore",
-"settings.general":"Website Settings|Admin Settings|Language|Time Zone|Date Format|Theme|Save Settings",
-"settings.wedding":"Website Settings|Admin Settings|Save Settings",
-"settings.date-time":"Language|Time Zone|Date Format|Save Settings",
+"settings.general-settings":"Website Settings|Admin Settings|Language|Time Zone|Date Format|Theme|Save Settings",
+
+
 "settings.language":"Language|Save Settings",
 "settings.notification-settings":"Enable Notifications|RSVP Notifications|Guestbook Notifications|Security Notifications|System Notifications",
 "settings.privacy-settings":"Analytics Collection|Guest Upload Privacy|Media Privacy|Event Unlock",
-"settings.advanced":"Advanced Settings|Save Settings",
+
 "trash.deleted-items":"List all deleted items|Filter by Type|Search Deleted Item|View|Restore|Permanently Delete",
 "trash.recovery-settings":"Restore Selected|Restore All|Empty Trash|Automatic Delete Period|Save Draft",
 "help.documentation":"Getting Started|Website Editor Guide|RSVP Guide|Guestbook Guide|Media Guide|Publishing Guide|Backup & Restore Guide",
